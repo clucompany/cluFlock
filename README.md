@@ -21,60 +21,68 @@ Control of lock of the file using the 'flock' functions.
 # Use
 
 1. LockFile
-     extern crate cluFlock;
+		
+		extern crate cluFlock;
 
-     use cluFlock::Flock;
-     use std::fs::File;
+		use cluFlock::Flock;
+		use std::fs::File;
 
-     fn main() {
-          let file = File::create("/tmp/1").unwrap();
+		fn main() {
+			let file = File::create("/tmp/1").unwrap();
 
-          let lock = file.exclusive_lock();
-          //Only one process can retain exclusive lock of the file.
+			let lock = file.exclusive_lock();
+			//Only one process can retain exclusive lock of the file.
 
-          println!("{:?}", lock);
+			println!("{:?}", lock);
 
-          drop(lock);
-     }
+			drop(lock);
+		}
 
 
 2. TryLockFile
-     extern crate cluFlock;
+		
+		extern crate cluFlock;
 
-     use cluFlock::Flock;
-     use std::fs::File;
-     use std::time::Duration;
+		use cluFlock::Flock;
+		use std::fs::File;
+		use std::time::Duration;
 
-     fn main() {
-          let file = match File::create("/tmp/ulin.lock") {
-               Ok(a) => a,
-               Err(e) => panic!("Panic, err create file {:?}", e),
-          };
+		fn main() {
+			let file = match File::create("/tmp/ulin.lock") {
+				Ok(a) => a,
+				Err(e) => panic!("Panic, err create file {:?}", e),
+			};
 
-          println!("Try_Exclusive_Lock, {:?}", file);
-          let lock = match file.try_exclusive_lock() {
-               //Success, we blocked the file.
-               Ok(Some(lock)) => {
-                    println!("File {:?} successfully locked.", file);
-                    lock
-               },
-               
-               //File already locked.
-               Ok(None) => {
-                    println!("File {:?} already locked.", file);
+			println!("Try_Exclusive_Lock, {:?}", file);
+			let lock = match file.try_exclusive_lock() {
+				//Success, we blocked the file.
+				Ok(Some(lock)) => {
+					println!("File {:?} successfully locked.", file);
+					lock
+				},
 
-                    println!("!Exclusive_Lock, {:?}", file);
-                    //Lock the current thread to such an extent until your file is unlocked.
-                    file.exclusive_lock().unwrap()
-               },
-               
-               Err(e) => panic!("Panic, err lock file {:?}", e)
+				//File already locked.
+				Ok(None) => {
+					println!("File {:?} already locked.", file);
 
-          };
+					println!("!Exclusive_Lock, {:?}", file);
+					//Lock the current thread to such an extent until your file is unlocked.
+					file.exclusive_lock().unwrap()
+				},
 
-          println!("Sleep, 5s");
-          ::std::thread::sleep(Duration::from_secs(5));
+				Err(e) => panic!("Panic, err lock file {:?}", e)
 
-          println!("Unlock, {:?}", file);
-          drop(lock);
-     }
+			};
+
+			println!("Sleep, 5s");
+			::std::thread::sleep(Duration::from_secs(5));
+
+			println!("Unlock, {:?}", file);
+			drop(lock);
+		}
+
+# License
+
+Copyright 2018 #UlinProject Денис Котляров
+
+Licensed under the Apache License, Version 2.0
