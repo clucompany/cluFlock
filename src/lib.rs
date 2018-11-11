@@ -1,4 +1,16 @@
 
+
+/*!
+
+
+Устанавливает или снимает консультативную блокировку на открытом файле.
+
+
+
+*/
+
+
+
 #[cfg(unix)]
 mod unix;
 #[cfg(unix)]
@@ -12,52 +24,66 @@ mod lock;
 pub use self::lock::*;
 
 
-pub trait Flock {
-     fn try_unique_lock<'a>(&'a self) -> Result<UniqueFlockLock<'a>, io::Error>;
-     fn unique_lock<'a>(&'a self) -> Result<UniqueFlockLock<'a>, io::Error>;
+pub trait Flock<'a> {
+     type ExclusiveLock: FlockLock + 'a;
+     type SharedLock: FlockLock + 'a;
 
-     fn try_shared_lock<'a>(&'a self) -> Result<SharedFlockLock<'a>, io::Error>;
-     fn shared_lock<'a>(&'a self) -> Result<SharedFlockLock<'a>, io::Error>;
+     fn try_exclusive_lock(&'a self) -> Result<Self::ExclusiveLock, io::Error>;
+     
+     //Установить эксклюзивную блокировку. Только один процесс может держать эксклюзивную блокировку файла. 
+     fn exclusive_lock(&'a self) -> Result<Self::ExclusiveLock, io::Error>;
+
+     
+     fn try_shared_lock(&'a self) -> Result<Self::SharedLock, io::Error>;
+
+     //Установить разделяемую блокировку. Разделяемую блокировку на заданный файл может держать более чем один процесс. 
+     fn shared_lock(&'a self) -> Result<Self::SharedLock, io::Error>;
 }
 
-impl<'a, F: Flock> Flock for &'a F {
-     #[inline(always)]
-     fn try_unique_lock(&self) -> Result<UniqueFlockLock, io::Error> {(**self).try_unique_lock()}
+impl<'l, 'a, F: Flock<'a>> Flock<'a> for &'l F {
+     type ExclusiveLock = F::ExclusiveLock;
+     type SharedLock = F::SharedLock;
 
      #[inline(always)]
-     fn unique_lock(&self) -> Result<UniqueFlockLock, io::Error> {(**self).unique_lock()}
+     fn try_exclusive_lock(&'a self) -> Result<Self::ExclusiveLock, io::Error> {(**self).try_exclusive_lock()}
 
      #[inline(always)]
-     fn try_shared_lock(&self) -> Result<SharedFlockLock, io::Error> {(**self).try_shared_lock()}
+     fn exclusive_lock(&'a self) -> Result<Self::ExclusiveLock, io::Error> {(**self).exclusive_lock()}
 
      #[inline(always)]
-     fn shared_lock(&self) -> Result<SharedFlockLock, io::Error> {(**self).shared_lock()}
+     fn try_shared_lock(&'a self) -> Result<Self::SharedLock, io::Error> {(**self).try_shared_lock()}
+
+     #[inline(always)]
+     fn shared_lock(&'a self) -> Result<Self::SharedLock, io::Error> {(**self).shared_lock()}
 }
 
-impl<'a, F: Flock> Flock for &'a mut F {
-     #[inline(always)]
-     fn try_unique_lock(&self) -> Result<UniqueFlockLock, io::Error> {(**self).try_unique_lock()}
+impl<'l, 'a, F: Flock<'a>> Flock<'a> for &'l mut F {
+     type ExclusiveLock = F::ExclusiveLock;
+     type SharedLock = F::SharedLock;
 
      #[inline(always)]
-     fn unique_lock(&self) -> Result<UniqueFlockLock, io::Error> {(**self).unique_lock()}
+     fn try_exclusive_lock(&'a self) -> Result<Self::ExclusiveLock, io::Error> {(**self).try_exclusive_lock()}
 
      #[inline(always)]
-     fn try_shared_lock(&self) -> Result<SharedFlockLock, io::Error> {(**self).try_shared_lock()}
+     fn exclusive_lock(&'a self) -> Result<Self::ExclusiveLock, io::Error> {(**self).exclusive_lock()}
 
      #[inline(always)]
-     fn shared_lock(&self) -> Result<SharedFlockLock, io::Error> {(**self).shared_lock()}
+     fn try_shared_lock(&'a self) -> Result<Self::SharedLock, io::Error> {(**self).try_shared_lock()}
+
+     #[inline(always)]
+     fn shared_lock(&'a self) -> Result<Self::SharedLock, io::Error> {(**self).shared_lock()}
 }
 
 
 /*
 impl<'l, A: AsRef<File>> Flock for &'l A {
      #[inline]
-     fn try_unique_lock<'a>(&'a self) -> Result<UniqueFlockLock<'a>, io::Error> {
+     fn try_exclusive_lock<'a>(&'a self) -> Result<UniqueFlockLock<'a>, io::Error> {
           UniqueFlockLock::try_lock(self.as_ref())
      }
 
      #[inline]
-     fn unique_lock<'a>(&'a self) -> Result<UniqueFlockLock<'a>, io::Error> {
+     fn exclusive_lock<'a>(&'a self) -> Result<UniqueFlockLock<'a>, io::Error> {
           UniqueFlockLock::lock(self.as_ref())
      }
 
@@ -72,44 +98,33 @@ impl<'l, A: AsRef<File>> Flock for &'l A {
      }
 }*/
 
-impl Flock for File {
+impl<'a> Flock<'a> for File {
+     type ExclusiveLock = UniqueFlockLock<'a>;
+     type SharedLock = SharedFlockLock<'a>;
+
      #[inline]
-     fn try_unique_lock<'a>(&'a self) -> Result<UniqueFlockLock<'a>, io::Error> {
+     fn try_exclusive_lock(&'a self) -> Result<Self::ExclusiveLock, io::Error> {
           UniqueFlockLock::try_lock(self)
      }
 
      #[inline]
-     fn unique_lock<'a>(&'a self) -> Result<UniqueFlockLock<'a>, io::Error> {
+     fn exclusive_lock(&'a self) -> Result<Self::ExclusiveLock, io::Error> {
           UniqueFlockLock::lock(self)
      }
 
      #[inline]
-     fn try_shared_lock<'a>(&'a self) -> Result<SharedFlockLock<'a>, io::Error> {
+     fn try_shared_lock(&'a self) -> Result<Self::SharedLock, io::Error> {
           SharedFlockLock::try_lock(self)
      }
 
      #[inline]
-     fn shared_lock<'a>(&'a self) -> Result<SharedFlockLock<'a>, io::Error> {
+     fn shared_lock(&'a self) -> Result<Self::SharedLock, io::Error> {
           SharedFlockLock::lock(self)
      }
 }
 
-/*
-impl<'a, F: Flock> Flock for &'a F {
-     #[inline(always)]
-     fn try_unique_lock(&self) -> Result<UniqueFlockLock, io::Error> {(**self).try_unique_lock()}
-
-     #[inline(always)]
-     fn unique_lock(&self) -> Result<UniqueFlockLock, io::Error> {(**self).unique_lock()}
-
-     #[inline(always)]
-     fn try_shared_lock(&self) -> Result<SharedFlockLock, io::Error> {(**self).try_shared_lock()}
-
-     #[inline(always)]
-     fn shared_lock(&self) -> Result<SharedFlockLock, io::Error> {(**self).shared_lock()}
-}*/
-
 
 pub trait FlockLock: Drop + Debug {
      fn unlock(self) where Self: Sized {}
+     fn box_unlock(self: Box<Self>) where Self: Sized {}
 }
