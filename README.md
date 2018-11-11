@@ -21,6 +21,7 @@ Control of lock of the file using the 'flock' functions.
 # Use
 
 1. LockFile
+		
 		extern crate cluFlock;
 
 		use cluFlock::Flock;
@@ -39,6 +40,7 @@ Control of lock of the file using the 'flock' functions.
 
 
 2. TryLockFile
+		
 		extern crate cluFlock;
 
 		use cluFlock::Flock;
