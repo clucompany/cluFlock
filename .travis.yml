@@ -1,0 +1,12 @@
+language: rust
+cache: cargo
+rust:
+  - stable
+  - nightly
+matrix:
+  allow_failures:
+    - stable
+    - rust: nightly
+script:
+  - cargo build --verbose
+  - cargo test --lib --verbose

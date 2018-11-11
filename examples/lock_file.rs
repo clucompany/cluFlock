@@ -38,6 +38,4 @@ fn main() {
 
      println!("Unlock, {:?}", file);
      drop(lock);
-     
-     
 }
