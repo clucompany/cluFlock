@@ -1,8 +1,15 @@
 [package]
 name = "cluFlock"
-version = "0.1.1"
-authors = ["Денис Котляров <denis2005991@gmail.com>"]
+version = "0.1.2"
+authors = ["Денис Котляров <#Ulin Project 18, denis2005991@gmail.com>"]
+repository = "https://github.com/clucompany/cluFlock.git"
+license = " Apache-2.0"
+readme = "README.md"
 
+keywords = ["flock", "unix_flock", "lock_file", "clucompany"]
+categories = ["development-tools"]
+
+description = "Control of lock of the file using the 'flock' functions."
 
 [dependencies]
 libc = "0.2.43"

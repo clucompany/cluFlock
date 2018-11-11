@@ -8,13 +8,10 @@ use std::fs::File;
 fn main() {
      let file = File::create("/tmp/1").unwrap();
 
-     let lock = file.try_exclusive_lock();
 
-
+     let lock = file.exclusive_lock();
+          //lock...
      println!("{:?}", lock);
-
-     #[allow(deprecated)]
-     ::std::thread::sleep_ms(3000);
 
      drop(lock);
 }
