@@ -190,22 +190,22 @@ impl<'a> Flock<'a> for File {
 
      #[inline]
      fn try_exclusive_lock(&'a self) -> Result<Option<Self::ExclusiveLock>, io::Error> {
-          ExclusiveFlockLock::try_lock(self)
+          Self::ExclusiveLock::try_lock(self)
      }
 
      #[inline]
      fn exclusive_lock(&'a self) -> Result<Self::ExclusiveLock, io::Error> {
-          ExclusiveFlockLock::lock(self)
+          Self::ExclusiveLock::lock(self)
      }
 
      #[inline]
      fn try_shared_lock(&'a self) -> Result<Option<Self::SharedLock>, io::Error> {
-          SharedFlockLock::try_lock(self)
+          Self::SharedLock::try_lock(self)
      }
 
      #[inline]
      fn shared_lock(&'a self) -> Result<Self::SharedLock, io::Error> {
-          SharedFlockLock::lock(self)
+          Self::SharedLock::lock(self)
      }
 }
 
@@ -218,6 +218,7 @@ pub trait FlockLock: Drop + Debug {
 
 pub (crate) trait InitFlockLock<'a> {
      type Lock: FlockLock + 'a;
+     type Arg: 'a;
      
-     fn new(f: &'a File) -> Self::Lock;
+     fn new(f: Self::Arg) -> Self::Lock;
 }

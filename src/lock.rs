@@ -19,9 +19,10 @@ impl<'a> ExclusiveFlockLock<'a> {
 }
 impl<'a> InitFlockLock<'a> for ExclusiveFlockLock<'a> {
      type Lock = Self;
+     type Arg = &'a File;
 
      #[inline]
-     fn new(f: &'a File) -> Self::Lock {
+     fn new(f: Self::Arg) -> Self::Lock {
           ExclusiveFlockLock(f)
      }
 }
@@ -51,9 +52,10 @@ impl<'a> SharedFlockLock<'a> {
 
 impl<'a> InitFlockLock<'a> for SharedFlockLock<'a> {
      type Lock = Self;
+     type Arg = &'a File;
 
      #[inline]
-     fn new(f: &'a File) -> Self::Lock {
+     fn new(f: Self::Arg) -> Self::Lock {
           SharedFlockLock(f)
      }
 }
@@ -65,3 +67,6 @@ impl<'a> Drop for SharedFlockLock<'a> {
 }
 
 impl<'a> FlockLock for SharedFlockLock<'a> {}
+
+
+
