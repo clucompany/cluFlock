@@ -125,6 +125,7 @@ pub trait Flock<'a>: Debug {
      
      ///Set exclusive lock. Lock current thread in case of file lock. Only one process can retain exclusive lock of the file.
      fn file_exclusive_lock(self) -> Result<Self::ExclusiveLock, io::Error>;
+     fn try_file_exclusive_lock(self) -> Result<Option<Self::ExclusiveLock>, io::Error>;
      
 
      fn try_shared_lock(&'a self) -> Result<Option<Self::SharedSliceLock>, io::Error>;
@@ -136,6 +137,8 @@ pub trait Flock<'a>: Debug {
 
      ///Set shared lock. Lock current thread in case of file lock. Can retain the general lock on the given file more than one process.
      fn file_shared_lock(self) -> Result<Self::SharedLock, io::Error>;
+
+     fn try_file_shared_lock(self) -> Result<Option<Self::SharedLock>, io::Error>;
 }
 /*
 impl<'l, 'a, F: Flock<'a>> Flock<'a> for &'l F {
@@ -231,8 +234,12 @@ impl<'a> Flock<'a> for File {
           
           Ok(f(lock))
      }
+
      fn file_exclusive_lock(self) -> Result<Self::ExclusiveLock, io::Error> {
           Self::ExclusiveLock::lock(self)
+     }
+     fn try_file_exclusive_lock(self) -> Result<Option<Self::ExclusiveLock>, io::Error> {
+          Self::ExclusiveLock::try_lock(self)
      }
 
      fn try_shared_lock(&'a self) -> Result<Option<Self::SharedSliceLock>, io::Error> {
@@ -254,6 +261,9 @@ impl<'a> Flock<'a> for File {
 
      fn file_shared_lock(self) -> Result<Self::SharedLock, io::Error> {
           Self::SharedLock::lock(self)
+     }
+     fn try_file_shared_lock(self) -> Result<Option<Self::SharedLock>, io::Error> {
+          Self::SharedLock::try_lock(self)
      }
 }
 
