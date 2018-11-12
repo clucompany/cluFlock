@@ -47,6 +47,12 @@ impl DerefMut for ExclusiveLock {
      }
 }
 
+impl AsRef<File> for ExclusiveLock {
+     #[inline(always)]
+     fn as_ref(&self) -> &File {
+          &*self
+     }
+}
 
 impl FlockLock for ExclusiveLock {}
 

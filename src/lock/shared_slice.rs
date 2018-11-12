@@ -40,6 +40,20 @@ impl<'a> Deref for SharedSliceLock<'a> {
 
 impl<'a> FlockLock for SharedSliceLock<'a> {}
 
+impl<'a> Into<&'a File> for SharedSliceLock<'a> {
+     #[inline(always)]
+     fn into(self) -> &'a File {
+          self.0
+     }
+}
+impl<'a> AsRef<File> for SharedSliceLock<'a> {
+     #[inline(always)]
+     fn as_ref(&self) -> &File {
+          &*self
+     }
+}
+
+
 impl<'a> Drop for SharedSliceLock<'a> {
      fn drop(&mut self) {
           let _e = crate::sys::unlock(&self.0);

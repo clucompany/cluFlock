@@ -165,7 +165,8 @@ pub fn main() -> Result<(), io::Error> {
 #[cfg(unix)]
 mod unix;
 #[cfg(unix)]
-use unix as sys;
+pub (crate) use unix as sys;
+
 
 use std::fmt::Debug;
 use std::fs::File;
@@ -187,11 +188,32 @@ pub trait Flock<'a>: Debug {
      ///Set exclusive lock. Lock current thread in case of file lock. Only one process can retain exclusive lock of the file.
      fn exclusive_lock(&'a self) -> Result<Self::ExclusiveSliceLock, io::Error>;
 
-     fn exclusive_lock_fn<F: FnMut(Self::ExclusiveSliceLock) -> A, A>(&'a self, f: F) -> Result<A, io::Error>;
+     /*#[inline]
+     fn exclusive_lock_fn<N: FnMut(Self::ExclusiveSliceLock) -> A, A>(&'a self, mut f: N) -> Result<A, io::Error> {
+          match self.exclusive_lock() {
+               Ok(a) => Ok( f(a) ),
+               Err(e) => Err(e),
+          }
+     }
+
+     #[inline]
+     fn try_exclusive_lock_fn<F: FnMut(Self::ExclusiveLock) -> A, A>(&'a mut self, mut f: F) -> Result<Option<A>, io::Error> {
+          match self.try_file_exclusive_lock() {
+               Ok(Some(lock)) => {
+                    let result = f(lock);  
+
+                    Ok( Some(result))
+               },
+               Ok(None) => Ok(None),
+
+               Err(e) => Err(e),
+          }
+     }*/
      
      ///Set exclusive lock. Lock current thread in case of file lock. Only one process can retain exclusive lock of the file.
      fn file_exclusive_lock(self) -> Result<Self::ExclusiveLock, io::Error>;
      fn try_file_exclusive_lock(self) -> Result<Option<Self::ExclusiveLock>, io::Error>;
+     
      
 
      fn try_shared_lock(&'a self) -> Result<Option<Self::SharedSliceLock>, io::Error>;
@@ -199,7 +221,24 @@ pub trait Flock<'a>: Debug {
      ///Set shared lock. Lock current thread in case of file lock. Can retain the general lock on the given file more than one process.
      fn shared_lock(&'a self) -> Result<Self::SharedSliceLock, io::Error>;
 
-     fn shared_lock_fn<F: FnMut(Self::SharedSliceLock) -> A, A>(&'a self, f: F) -> Result<A, io::Error>;
+     /*#[inline]
+     fn shared_lock_fn<N: FnMut(Self::SharedSliceLock) -> A, A>(&'a self, mut f: N) -> Result<A, io::Error> {
+          match self.shared_lock() {
+               Ok(a) => Ok( f(a) ),
+               Err(e) => Err(e),
+          }
+     }
+
+     #[inline]
+     fn try_shared_lock_fn<F: FnMut(Self::SharedSliceLock) -> A, A>(&'a self, mut f: F) -> Result<Option<A>, io::Error> {
+          match self.try_shared_lock() {
+               Ok(Some(a)) => Ok(Some( f(a) )),
+               Ok(None) => Ok(None),
+
+               Err(e) => return Err(e),
+          }
+     }*/
+     
 
      ///Set shared lock. Lock current thread in case of file lock. Can retain the general lock on the given file more than one process.
      fn file_shared_lock(self) -> Result<Self::SharedLock, io::Error>;
@@ -292,15 +331,6 @@ impl<'a> Flock<'a> for File {
           Self::ExclusiveSliceLock::lock(self)
      }
 
-     fn exclusive_lock_fn<N: FnMut(Self::ExclusiveSliceLock) -> A, A>(&'a self, mut f: N) -> Result<A, io::Error> {
-          let lock = match self.exclusive_lock() {
-               Ok(a) => a,
-               Err(e) => return Err(e),
-          };
-          
-          Ok(f(lock))
-     }
-
      fn file_exclusive_lock(self) -> Result<Self::ExclusiveLock, io::Error> {
           Self::ExclusiveLock::lock(self)
      }
@@ -314,15 +344,6 @@ impl<'a> Flock<'a> for File {
 
      fn shared_lock(&'a self) -> Result<Self::SharedSliceLock, io::Error> {
           Self::SharedSliceLock::lock(self)
-     }
-
-     fn shared_lock_fn<N: FnMut(Self::SharedSliceLock) -> A, A>(&'a self, mut f: N) -> Result<A, io::Error> {
-          let lock = match self.shared_lock() {
-               Ok(a) => a,
-               Err(e) => return Err(e),
-          };
-          
-          Ok(f(lock))
      }
 
      fn file_shared_lock(self) -> Result<Self::SharedLock, io::Error> {

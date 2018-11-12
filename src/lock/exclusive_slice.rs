@@ -42,6 +42,20 @@ impl<'a> Deref for ExclusiveSliceLock<'a> {
 
 impl<'a> FlockLock for ExclusiveSliceLock<'a> {}
 
+impl<'a> Into<&'a File> for ExclusiveSliceLock<'a> {
+     #[inline(always)]
+     fn into(self) -> &'a File {
+          self.0
+     }
+}
+
+impl<'a> AsRef<File> for ExclusiveSliceLock<'a> {
+     #[inline(always)]
+     fn as_ref(&self) -> &File {
+          &*self
+     }
+}
+
 impl<'a> Drop for ExclusiveSliceLock<'a> {
      fn drop(&mut self) {
           let _e = crate::sys::unlock(self.0);

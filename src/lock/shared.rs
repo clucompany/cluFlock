@@ -46,6 +46,12 @@ impl DerefMut for SharedLock {
      }
 }
 
+impl AsRef<File> for SharedLock {
+     #[inline(always)]
+     fn as_ref(&self) -> &File {
+          &*self
+     }
+}
 
 impl FlockLock for SharedLock {}
 
