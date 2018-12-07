@@ -81,7 +81,7 @@ Control of lock of the file using the 'flock' functions.
 			drop(lock);
 		}
 
-3. FileLock (BufLockFile + try_lock)
+3. FileFlock (BufLockFile + try_lock)
 
 		extern crate cluFlock;
 
@@ -132,7 +132,7 @@ Control of lock of the file using the 'flock' functions.
 			println!("LockFile {:?}", path);
 			let lock_file = MyLockFile::new(path)?;
 
-			println!("OK! FileLock {:?}", lock_file);
+			println!("OK! FileFlock {:?}", lock_file);
 			for a in 0..4 {
 				println!("Sleep {}", a);
 				::std::thread::sleep(::std::time::Duration::from_secs(1));

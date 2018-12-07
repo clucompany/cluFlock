@@ -4,13 +4,18 @@ extern crate cluFlock;
 
 use cluFlock::Flock;
 use std::fs::File;
+use std::io;
 
-fn main() {
-     let file = File::create("/tmp/1").unwrap();
+fn main() -> Result<(), io::Error> {
+     let file = File::create("/tmp/1")?;
 
-     let lock = file.exclusive_lock();
-          //lock...
-     println!("{:?}", lock);
+     let file_lock = file.wait_exclusive_lock()?;
+     //lock...
 
-     drop(lock);
+     println!("{:?}", file_lock);
+     
+     // let file move! 
+     drop(file_lock);
+
+     Ok( () )
 }

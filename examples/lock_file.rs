@@ -2,31 +2,36 @@
 
 extern crate cluFlock;
 
-use cluFlock::Flock;
+use cluFlock::ExclusiveFlock;
 use std::fs::File;
 use std::time::Duration;
+use std::io::ErrorKind;
 
 fn main() {
-     let file = match File::create("/tmp/ulin.lock") {
+     let file: File = match File::create("/tmp/ulin.lock") {
           Ok(a) => a,
           Err(e) => panic!("Panic, err create file {:?}", e),
      };
 
      println!("Try_Exclusive_Lock, {:?}", file);
-     let lock = match file.try_exclusive_lock() {
+
+     let lock = match ExclusiveFlock::try_lock(&file) {
           //Success, we blocked the file.
-          Ok(Some(lock)) => {
+          Ok(lock) => {
                println!("File {:?} successfully locked.", file);
+
+               
                lock
           },
           
           //File already locked.
-          Ok(None) => {
-               println!("File {:?} already locked.", file);
+          Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
+               println!("ALREADY LOCKED: File {:?}.", file);
 
                println!("!Exclusive_Lock, {:?}", file);
                //Lock the current thread to such an extent until your file is unlocked.
-               file.exclusive_lock().unwrap()
+               //&file.wait_exclusive_lock().unwrap()
+               ExclusiveFlock::wait_lock(&file).unwrap()
           },
           
           Err(e) => panic!("Panic, err lock file {:?}", e)
