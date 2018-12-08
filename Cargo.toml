@@ -12,4 +12,4 @@ categories = ["development-tools"]
 description = "Control of lock of the file using the 'flock' functions."
 
 [dependencies]
-libc = "0.2.43"
+libc = "0.2.44"
