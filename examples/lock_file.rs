@@ -29,6 +29,7 @@ fn main() {
                println!("ALREADY LOCKED: File {:?}.", file);
 
                println!("!Exclusive_Lock, {:?}", file);
+               
                //Lock the current thread to such an extent until your file is unlocked.
                //&file.wait_exclusive_lock().unwrap()
                ExclusiveFlock::wait_lock(&file).unwrap()

@@ -2,31 +2,31 @@
 extern crate libc;
 
 mod raw_fd;
+pub use self::raw_fd::*;
 
 use raw::RawConstFlock;
 use std::io;
-pub use self::raw_fd::*;
 
 
 
 
-#[inline]
+#[inline(always)]
 pub (crate) fn wait_lock_shared<'a, I: RawConstFlock<'a>>(arg: I::Arg) -> Result<I::Lock, io::Error> where I::Arg: UnixRawFd {
     wait_flock::<I>(arg, libc::LOCK_SH)
 }
 
-#[inline]
+#[inline(always)]
 pub (crate) fn wait_lock_exclusive<'a, I: RawConstFlock<'a>>(arg: I::Arg) -> Result<I::Lock, io::Error> where I::Arg: UnixRawFd {
     wait_flock::<I>(arg, libc::LOCK_EX)
 }
 
 //TRY
-#[inline]
+#[inline(always)]
 pub (crate) fn try_lock_shared<'a, I: RawConstFlock<'a>>(arg: I::Arg) -> Result<I::Lock, io::Error> where I::Arg: UnixRawFd {
     try_flock::<I>(arg, libc::LOCK_SH | libc::LOCK_NB)
 }
 
-#[inline]
+#[inline(always)]
 pub (crate) fn try_lock_exclusive<'a, I: RawConstFlock<'a>>(arg: I::Arg) -> Result<I::Lock, io::Error> where I::Arg: UnixRawFd {
     try_flock::<I>(arg, libc::LOCK_EX | libc::LOCK_NB)
 }
@@ -34,7 +34,7 @@ pub (crate) fn try_lock_exclusive<'a, I: RawConstFlock<'a>>(arg: I::Arg) -> Resu
 
 //TRY
 
-#[inline]
+#[inline(always)]
 pub (crate) fn unlock<I: UnixRawFd>(fd: I) -> Result<(), io::Error> {
     match unsafe { libc::flock(fd.as_raw_fd(), libc::LOCK_UN) } {
         0 => {},
@@ -44,7 +44,7 @@ pub (crate) fn unlock<I: UnixRawFd>(fd: I) -> Result<(), io::Error> {
     Ok( () )
 }
 
-#[inline]
+#[inline(always)]
 fn try_flock<'a, I: RawConstFlock<'a>>(arg: I::Arg, flag: libc::c_int) -> Result<I::Lock, io::Error> where I::Arg: UnixRawFd {
     match unsafe { libc::flock(arg.as_raw_fd(), flag) } {
         0 => {},
@@ -58,7 +58,7 @@ fn try_flock<'a, I: RawConstFlock<'a>>(arg: I::Arg, flag: libc::c_int) -> Result
     Ok( I::new(arg) )
 }
 
-#[inline]
+#[inline(always)]
 fn wait_flock<'a, I: RawConstFlock<'a>>(arg: I::Arg, flag: libc::c_int) -> Result<I::Lock, io::Error> where I::Arg: UnixRawFd {
     match unsafe { libc::flock(arg.as_raw_fd(), flag) } {
         0 => {},

@@ -1,12 +1,12 @@
 
 
+use FlockLockExp;
 use raw::RawConstFlock;
 use std::ops::Deref;
 use FlockLock;
 use std::fs::File;
 use std::io;
 
-///Only one process can retain exclusive lock of the file.
 #[derive(Debug)]
 pub struct FileSliceFlock<'a>(&'a File, SliceFileUnlock<'a>);
 
@@ -33,16 +33,28 @@ impl<'a> FileSliceFlock<'a> {
           crate::sys::try_lock_shared::<Self>(f)
      }
 
-     #[inline(always)]
+     /*#[inline(always)]
      pub fn unlock(self) -> &'a File {
+          self.into()
+     }*/
+}
+
+impl<'a> FlockLockExp for FileSliceFlock<'a> {
+     type ResultUnlock = &'a File;
+
+     #[inline(always)]
+     fn unlock(self) -> Self::ResultUnlock {
           self.into()
      }
 }
+
+
 
 impl<'a> RawConstFlock<'a> for FileSliceFlock<'a> {
      type Lock = Self;
      type Arg = &'a File;
 
+     #[inline(always)]
      fn new(a: Self::Arg) -> Self::Lock {
           Self::Lock::new(a)
      }
@@ -89,6 +101,7 @@ impl<'a> SliceFileUnlock<'a> {
 
 
 impl<'a> Drop for SliceFileUnlock<'a> {
+     #[inline]
      fn drop(&mut self) {
           let _e = crate::sys::unlock(&self.0);
      }

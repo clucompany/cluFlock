@@ -27,59 +27,65 @@ Control of lock of the file using the 'flock' functions.
 
 # Locks
 
-1. ExclusiveLock - Only one process can retain exclusive lock of the file.
-2. SharedLock - Can retain the general lock on the given file more than one process.
+1. ExclusiveFlock - To establish exclusive blocking. Only one process can hold exclusive blocking of the file..
+2. SharedFlock - Set a shared lock. A shared lock on a given file can hold more than one process.
 
 # Use
 
-1. LockSliceFile
+1. Exclusive FileFlock
 ```
 extern crate cluFlock;
 
 use cluFlock::Flock;
 use std::fs::File;
+use std::io;
 
-fn main() {
-     let file = File::create("/tmp/1").unwrap();
+fn main() -> Result<(), io::Error> {
+     let file_lock = File::create("/tmp/1")?.wait_exclusive_lock()?;
 
-     let lock = file.exclusive_lock();
-     //Only one process can retain exclusive lock of the file.
+     println!("{:?}", file_lock);
+     
+     drop(file_lock);
 
-     println!("{:?}", lock);
-
-     drop(lock);
+     Ok( () )
 }
 ```
 
-2. TrySliceLockFile
+2. Try SliceFlockFile
 ```
 extern crate cluFlock;
 
-use cluFlock::Flock;
+use cluFlock::ExclusiveFlock;
 use std::fs::File;
 use std::time::Duration;
+use std::io::ErrorKind;
 
 fn main() {
-     let file = match File::create("/tmp/ulin.lock") {
+     let file: File = match File::create("/tmp/ulin.lock") {
           Ok(a) => a,
           Err(e) => panic!("Panic, err create file {:?}", e),
      };
 
      println!("Try_Exclusive_Lock, {:?}", file);
-     let lock = match file.try_exclusive_lock() {
+
+     let lock = match ExclusiveFlock::try_lock(&file) {
           //Success, we blocked the file.
-          Ok(Some(lock)) => {
+          Ok(lock) => {
                println!("File {:?} successfully locked.", file);
+
+               
                lock
           },
           
           //File already locked.
-          Ok(None) => {
-               println!("File {:?} already locked.", file);
+          Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
+               println!("ALREADY LOCKED: File {:?}.", file);
 
                println!("!Exclusive_Lock, {:?}", file);
+               
                //Lock the current thread to such an extent until your file is unlocked.
-               file.exclusive_lock().unwrap()
+               //&file.wait_exclusive_lock().unwrap()
+               ExclusiveFlock::wait_lock(&file).unwrap()
           },
           
           Err(e) => panic!("Panic, err lock file {:?}", e)
@@ -94,36 +100,32 @@ fn main() {
 }
 ```
 
-3. FileFlock (BufLockFile + try_lock)
+3. FileFlock (Lock file)
 
 ```
 extern crate cluFlock;
 
-use std::io::ErrorKind::AlreadyExists;
-use cluFlock::ExclusiveLock;
 use cluFlock::Flock;
+use cluFlock::FileFlock;
+use std::io::ErrorKind::AlreadyExists;
 use std::path::Path;
 use std::fs;
 use std::io;
-use std::io::Error;
-use std::io::ErrorKind;
 use std::fs::OpenOptions;
 
 #[derive(Debug)]
-pub struct MyLockFile<'a>(ExclusiveLock, Option<&'a Path>);
+pub struct MyLockFile<'a>(FileFlock, Option<&'a Path>);
 
 impl<'a> MyLockFile<'a> {
      pub fn new(p: &'a Path) -> Result<Self, io::Error> {
           let (lock, path) = match OpenOptions::new().write(true).create_new(true).open(p) {
-               Ok(file) => (file.file_exclusive_lock()?, Some(p)),
+               Ok(file) => (file.wait_exclusive_lock()?, Some(p)),
                Err(ref e) if e.kind() == AlreadyExists => {
                     let f = OpenOptions::new().read(true).open(p)?; 
 
-                    match f.try_file_exclusive_lock() {
-                         Ok(Some(lock)) => (lock, None),
-                         Ok(None) => return Err(Error::new(ErrorKind::Other, "the file is already locked")),
-                         Err(e) => return Err(e),
-                    }
+                    let lock = f.try_exclusive_lock()?;
+
+                    (lock, None)
                },
                Err(e) => return Err(e),
           };
@@ -165,6 +167,8 @@ pub fn main() -> Result<(), io::Error> {
 #[cfg(unix)]
 mod raw;
 #[cfg(unix)]
+use std::ops::Deref;
+use std::fs::File;
 pub (crate) use self::raw::unix as sys;
 
 
@@ -176,7 +180,6 @@ pub use self::lock::*;
 
 
 pub trait Flock: Debug {
-
      #[inline(always)]
      fn wait_exclusive_lock(self) -> Result<Self::ExclusiveLock, io::Error> where Self: ExclusiveFlock + Sized {
           ExclusiveFlock::wait_lock(self)
@@ -202,44 +205,34 @@ impl<'a, F: Flock> Flock for &'a F {}
 impl<'a, F: Flock> Flock for &'a mut F {}
 
 
-
-
+///To establish exclusive blocking. Only one process can hold exclusive blocking of the file.
 pub trait ExclusiveFlock: Debug {
      type ExclusiveLock: FlockLock;
 
      fn try_lock(self) -> Result<Self::ExclusiveLock, io::Error>;
 
-     ///Set exclusive lock. Lock current thread in case of file lock. Only one process can retain exclusive lock of the file.
      fn wait_lock(self) -> Result<Self::ExclusiveLock, io::Error>;
-
-     
-     //Set exclusive lock. Lock current thread in case of file lock. Only one process can retain exclusive lock of the file.
-     //fn wait_file_exclusive_lock(self) -> Result<Self::ExclusiveLock, io::Error>;
-     //fn try_file_exclusive_lock(self) -> Result<Option<Self::ExclusiveLock>, io::Error>;
 }
 
 
-
+///Set a shared lock. A shared lock on a given file can hold more than one process.
 pub trait SharedFlock: Debug {
      type SharedLock: FlockLock;
-     //type SharedSliceLock: FlockLock + 'a;
-
 
      fn try_lock(self) -> Result<Self::SharedLock, io::Error>;
 
-     ///Set shared lock. Lock current thread in case of file lock. Can retain the general lock on the given file more than one process.
      fn wait_lock(self) -> Result<Self::SharedLock, io::Error>;
-
-     //Set shared lock. Lock current thread in case of file lock. Can retain the general lock on the given file more than one process.
-     //fn wait_file_shared_lock(self) -> Result<Self::SharedLock, io::Error>;
-
-     //fn try_file_shared_lock(self) -> Result<Option<Self::SharedLock>, io::Error>;
 }
 
 
+///The trait describing the working `flock` blocking
+pub trait FlockLock: Debug + AsRef<File> + Deref<Target = File> {}
 
 
-
-pub trait FlockLock: Debug {}
-
+///The trait describing the working `flock` blocking. The expanded version with a possibility of removal of blocking.
+pub trait FlockLockExp: FlockLock {
+     type ResultUnlock;
+     
+     fn unlock(self) -> Self::ResultUnlock;
+}
 
