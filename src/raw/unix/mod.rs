@@ -4,7 +4,7 @@ extern crate libc;
 mod raw_fd;
 pub use self::raw_fd::*;
 
-use raw::RawConstFlock;
+use crate::raw::RawConstFlock;
 use std::io;
 
 

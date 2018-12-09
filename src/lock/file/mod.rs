@@ -6,9 +6,9 @@ pub use self::buf::*;
 pub use self::slice::*;
 
 
-use Flock;
-use SharedFlock;
-use ExclusiveFlock;
+use crate::Flock;
+use crate::SharedFlock;
+use crate::ExclusiveFlock;
 use std::fs::File;
 use std::io;
 

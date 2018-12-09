@@ -1,9 +1,11 @@
 
 
-use FlockLockExp;
-use raw::RawConstFlock;
+use crate::FlockLockExp;
+use crate::raw::RawConstFlock;
+use crate::FlockLock;
+
+
 use std::ops::Deref;
-use FlockLock;
 use std::fs::File;
 use std::io;
 

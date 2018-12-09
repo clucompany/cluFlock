@@ -1,6 +1,6 @@
 
 
-use FlockLock;
+use crate::FlockLock;
 
 pub mod unix;
 

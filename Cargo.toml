@@ -5,6 +5,7 @@ authors = ["Денис Котляров <#Ulin Project 18, denis2005991@gmail.co
 repository = "https://github.com/clucompany/cluFlock.git"
 license = " Apache-2.0"
 readme = "README.md"
+edition = "2018"
 
 keywords = ["flock", "unix_flock", "lock_file", "clucompany"]
 categories = ["development-tools"]

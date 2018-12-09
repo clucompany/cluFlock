@@ -1,9 +1,9 @@
 
+use crate::FlockLock;
+use crate::raw::RawConstFlock;
 
-use raw::RawConstFlock;
 use std::ops::DerefMut;
 use std::ops::Deref;
-use FlockLock;
 use std::fs::File;
 use std::io;
 
