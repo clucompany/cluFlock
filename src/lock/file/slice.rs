@@ -105,6 +105,6 @@ impl<'a> SliceFileUnlock<'a> {
 impl<'a> Drop for SliceFileUnlock<'a> {
      #[inline]
      fn drop(&mut self) {
-          let _e = crate::sys::unlock(&self.0);
+          let _e = crate::sys::unlock(self.0);
      }
 }

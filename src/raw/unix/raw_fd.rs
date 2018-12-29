@@ -10,14 +10,14 @@ pub trait UnixRawFd {
 impl<'a, A: UnixRawFd> UnixRawFd for &'a A {
      #[inline(always)]
      fn as_raw_fd(&self) -> RawFd {
-          (**self).as_raw_fd()
+          A::as_raw_fd(self)
      }
 }
 
 impl<'a, A: UnixRawFd> UnixRawFd for &'a mut A {
      #[inline(always)]
      fn as_raw_fd(&self) -> RawFd {
-          (**self).as_raw_fd()
+          A::as_raw_fd(self)
      }
 }
 
