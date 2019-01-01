@@ -1,4 +1,5 @@
 
+use crate::FlockUnlock;
 use crate::FlockLock;
 use crate::raw::RawConstFlock;
 
@@ -9,6 +10,9 @@ use std::io;
 
 #[derive(Debug)]
 pub struct FileFlock(File);
+impl FlockLock for FileFlock {}
+
+
 
 impl FileFlock {
      #[inline]
@@ -18,37 +22,42 @@ impl FileFlock {
 
      pub fn wait_lock_exclusive(f: File) -> Result<Self, io::Error> {
           crate::sys::wait_lock_exclusive::<Self>(f)
-     }  
+     }
+
 
      pub fn wait_lock_shared(f: File) -> Result<Self, io::Error> {
           crate::sys::wait_lock_shared::<Self>(f)
-     }
+     }     
+
 
      pub fn try_lock_exclusive(f: File) -> Result<Self, io::Error> {
           crate::sys::try_lock_exclusive::<Self>(f)
      }
      
+
      pub fn try_lock_shared(f: File) -> Result<Self, io::Error> {
           crate::sys::try_lock_shared::<Self>(f)
      }
 }
 
-impl<'a> RawConstFlock<'a> for FileFlock {
+impl<'a> RawConstFlock for FileFlock {
      type Lock = Self;
      type Arg = File;
 
      #[inline(always)]
-     fn new(a: Self::Arg) -> Self::Lock {
+     fn next(a: Self::Arg) -> Self::Lock {
           Self::Lock::new(a)
      }
 }
 
-/*
-impl Into<File> for FileFlock {
-     fn into(self) -> File {
-          (self.0).0
+impl FlockUnlock for FileFlock {
+     type ResultUnlock = ();
+
+     #[inline(always)]
+     fn unlock(self) -> Self::ResultUnlock {
+          ()
      }
-}*/
+}
 
 impl Deref for FileFlock {
      type Target = File;
@@ -80,7 +89,6 @@ impl AsMut<File> for FileFlock {
      }
 }
 
-impl FlockLock for FileFlock {}
 
 
 impl Drop for FileFlock {

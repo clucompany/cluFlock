@@ -169,6 +169,8 @@ mod raw;
 #[cfg(unix)]
 use std::ops::Deref;
 use std::fs::File;
+
+#[cfg(unix)]
 pub (crate) use self::raw::unix as sys;
 
 
@@ -179,30 +181,60 @@ mod lock;
 pub use self::lock::*;
 
 
-pub trait Flock: Debug {
+///Constructor, generalized for 'Flock'
+pub trait ToFlock: Debug {
+
+     //exclusive
+
      #[inline(always)]
      fn wait_exclusive_lock(self) -> Result<Self::ExclusiveLock, io::Error> where Self: ExclusiveFlock + Sized {
           ExclusiveFlock::wait_lock(self)
      }
+
+     
+     #[inline(always)]
+     fn wait_exclusive_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> where Self: ExclusiveFlockFn + Sized {
+          ExclusiveFlockFn::wait_lock_fn(self, f)
+     }
+     
 
      #[inline(always)]
      fn try_exclusive_lock(self) -> Result<Self::ExclusiveLock, io::Error> where Self: ExclusiveFlock + Sized {
           ExclusiveFlock::try_lock(self)
      }
 
+     
+     #[inline(always)]
+     fn try_exclusive_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> where Self: ExclusiveFlockFn + Sized {
+          ExclusiveFlockFn::try_lock_fn(self, f)
+     }
+     
+
+     //shared
+
      #[inline(always)]
      fn wait_shared_lock(self) -> Result<Self::SharedLock, io::Error> where Self: SharedFlock + Sized {
           SharedFlock::wait_lock(self)
+     }
+     
+     #[inline(always)]
+     fn wait_shared_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> where Self: SharedFlockFn + Sized {
+          SharedFlockFn::wait_lock_fn(self, f)
      }
 
      #[inline(always)]
      fn try_shared_lock(self) -> Result<Self::SharedLock, io::Error> where Self: SharedFlock + Sized {
           SharedFlock::try_lock(self)
      }
+
+     #[inline(always)]
+     fn try_shared_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> where Self: SharedFlockFn + Sized {
+          SharedFlockFn::try_lock_fn(self, f)
+     }
 }
 
-impl<'a, F: Flock> Flock for &'a F {}
-impl<'a, F: Flock> Flock for &'a mut F {}
+impl<'a, F: ToFlock> ToFlock for &'a F {}
+impl<'a, F: ToFlock> ToFlock for &'a mut F {}
 
 
 ///To establish exclusive blocking. Only one process can hold exclusive blocking of the file.
@@ -210,8 +242,15 @@ pub trait ExclusiveFlock: Debug {
      type ExclusiveLock: FlockLock;
 
      fn try_lock(self) -> Result<Self::ExclusiveLock, io::Error>;
-
+     
      fn wait_lock(self) -> Result<Self::ExclusiveLock, io::Error>;
+}
+
+pub trait ExclusiveFlockFn: Debug {
+     type ExclusiveLockFn: FlockLock;
+
+     fn try_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error>;
+     fn wait_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error>;
 }
 
 
@@ -220,17 +259,24 @@ pub trait SharedFlock: Debug {
      type SharedLock: FlockLock;
 
      fn try_lock(self) -> Result<Self::SharedLock, io::Error>;
-
-     fn wait_lock(self) -> Result<Self::SharedLock, io::Error>;
+     fn wait_lock(self) -> Result<Self::SharedLock, io::Error>;     
 }
+
+pub trait SharedFlockFn: Debug {
+     type SharedLockFn: FlockLock;
+
+     fn try_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error>;
+     fn wait_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error>;
+}
+
 
 
 ///The trait describing the working `flock` blocking
 pub trait FlockLock: Debug + AsRef<File> + Deref<Target = File> {}
 
 
-///The trait describing the working `flock` blocking. The expanded version with a possibility of removal of blocking.
-pub trait FlockLockExp: FlockLock {
+///Trait of 'FlockLock' with a possibility of removal of blocking.
+pub trait FlockUnlock: FlockLock {
      type ResultUnlock;
      
      fn unlock(self) -> Self::ResultUnlock;

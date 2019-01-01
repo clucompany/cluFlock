@@ -21,9 +21,18 @@ impl<'a, A: UnixRawFd> UnixRawFd for &'a mut A {
      }
 }
 
+
+impl<A: UnixRawFd, T> UnixRawFd for (A, T) {
+     #[inline(always)]
+     fn as_raw_fd(&self) -> RawFd {
+          A::as_raw_fd(&self.0)
+     }
+}
+
 impl UnixRawFd for File {
      #[inline(always)]
      fn as_raw_fd(&self) -> RawFd {
           AsRawFd::as_raw_fd(self)
      }
 }
+

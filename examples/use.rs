@@ -1,7 +1,7 @@
 
 extern crate cluFlock;
 
-use cluFlock::Flock;
+use cluFlock::ToFlock;
 use std::fs::File;
 use std::io;
 

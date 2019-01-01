@@ -1,6 +1,6 @@
 [package]
 name = "cluFlock"
-version = "0.1.6"
+version = "0.1.7"
 authors = ["Денис Котляров <#Ulin Project 18, denis2005991@gmail.com>"]
 repository = "https://github.com/clucompany/cluFlock.git"
 license = " Apache-2.0"

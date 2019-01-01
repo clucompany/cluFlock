@@ -1,6 +1,6 @@
 
 
-use crate::FlockLockExp;
+use crate::FlockUnlock;
 use crate::raw::RawConstFlock;
 use crate::FlockLock;
 
@@ -11,11 +11,14 @@ use std::io;
 
 #[derive(Debug)]
 pub struct FileSliceFlock<'a>(&'a File, SliceFileUnlock<'a>);
+impl<'a> FlockLock for FileSliceFlock<'a> {}
+
+
 
 impl<'a> FileSliceFlock<'a> {
      #[inline]
      const fn new(f: &'a File) -> Self {
-          FileSliceFlock(f, SliceFileUnlock::new(f))
+          FileSliceFlock(f, SliceFileUnlock(f))
      }
 
      pub fn wait_lock_exclusive(f: &'a File) -> Result<Self, io::Error> {
@@ -30,18 +33,15 @@ impl<'a> FileSliceFlock<'a> {
      pub fn try_lock_exclusive(f: &'a File) -> Result<Self, io::Error> {
           crate::sys::try_lock_exclusive::<Self>(f)
      }
-     
+
+
      pub fn try_lock_shared(f: &'a File) -> Result<Self, io::Error> {
           crate::sys::try_lock_shared::<Self>(f)
      }
 
-     /*#[inline(always)]
-     pub fn unlock(self) -> &'a File {
-          self.into()
-     }*/
 }
 
-impl<'a> FlockLockExp for FileSliceFlock<'a> {
+impl<'a> FlockUnlock for FileSliceFlock<'a> {
      type ResultUnlock = &'a File;
 
      #[inline(always)]
@@ -52,12 +52,12 @@ impl<'a> FlockLockExp for FileSliceFlock<'a> {
 
 
 
-impl<'a> RawConstFlock<'a> for FileSliceFlock<'a> {
+impl<'a> RawConstFlock for FileSliceFlock<'a> {
      type Lock = Self;
      type Arg = &'a File;
 
      #[inline(always)]
-     fn new(a: Self::Arg) -> Self::Lock {
+     fn next(a: Self::Arg) -> Self::Lock {
           Self::Lock::new(a)
      }
 }
@@ -86,24 +86,13 @@ impl<'a> AsRef<File> for FileSliceFlock<'a> {
      }
 }
 
-impl<'a> FlockLock for FileSliceFlock<'a> {}
-
 
 
 
 #[derive(Debug)]
 struct SliceFileUnlock<'a>(&'a File);
 
-impl<'a> SliceFileUnlock<'a> {
-     #[inline]
-     const fn new(f: &'a File) -> Self {
-          SliceFileUnlock(f)
-     }
-}
-
-
 impl<'a> Drop for SliceFileUnlock<'a> {
-     #[inline]
      fn drop(&mut self) {
           let _e = crate::sys::unlock(self.0);
      }

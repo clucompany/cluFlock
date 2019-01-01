@@ -1,13 +1,10 @@
 
-
-use crate::FlockLock;
-
 pub mod unix;
 
-pub trait RawConstFlock<'a> {
-     type Lock: FlockLock + 'a;
-     type Arg: 'a;
+pub trait RawConstFlock {
+     type Lock;
+     type Arg;
      
-     fn new(f: Self::Arg) -> Self::Lock;
+     fn next(f: Self::Arg) -> Self::Lock;
 }
 

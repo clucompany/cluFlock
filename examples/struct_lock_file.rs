@@ -1,7 +1,7 @@
 
 extern crate cluFlock;
 
-use cluFlock::Flock;
+use cluFlock::ToFlock;
 use cluFlock::FileFlock;
 use std::io::ErrorKind::AlreadyExists;
 use std::path::Path;
