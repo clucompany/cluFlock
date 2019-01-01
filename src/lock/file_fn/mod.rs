@@ -1,4 +1,5 @@
 
+use crate::FlockUnlock;
 use crate::FlockLock;
 use std::marker::PhantomData;
 use crate::raw::RawConstFlock;
@@ -11,21 +12,21 @@ use std::io;
 
 ///The type used in closure automatically will unblock 'flock' at destruction of type.
 #[derive(Debug)]
-pub struct FlockUnlock(File);
-impl FlockLock for FlockUnlock {}
+pub struct FlockFnUnlock(File);
+impl FlockLock for FlockFnUnlock {}
 
 
-impl<F: FnMut(FlockUnlock) -> R, R> RawConstFlock for (FlockUnlock, PhantomData<F>, PhantomData<R>) {
+impl<F: FnMut(FlockFnUnlock) -> R, R> RawConstFlock for (FlockFnUnlock, PhantomData<F>, PhantomData<R>) {
      type Lock = R;
      type Arg = (File, F);
 
      #[inline(always)]
      fn next((file, mut f): Self::Arg) -> Self::Lock {
-          f(FlockUnlock(file))
+          f(FlockFnUnlock(file))
      }
 }
 
-impl crate::FlockUnlock for FlockUnlock {
+impl FlockUnlock for FlockFnUnlock {
      type ResultUnlock = ();
 
 
@@ -35,7 +36,7 @@ impl crate::FlockUnlock for FlockUnlock {
 }
 
 
-impl Deref for FlockUnlock {
+impl Deref for FlockFnUnlock {
      type Target = File;
 
      #[inline(always)]
@@ -43,34 +44,34 @@ impl Deref for FlockUnlock {
           &self.0
      }
 }
-impl DerefMut for FlockUnlock {
+impl DerefMut for FlockFnUnlock {
      #[inline(always)]
      fn deref_mut(&mut self) -> &mut Self::Target {
           &mut self.0
      }
 }
 
-impl AsRef<File> for FlockUnlock {
+impl AsRef<File> for FlockFnUnlock {
      #[inline(always)]
      fn as_ref(&self) -> &File {
           &self.0
      }
 }
-impl AsMut<File> for FlockUnlock {
+impl AsMut<File> for FlockFnUnlock {
      #[inline(always)]
      fn as_mut(&mut self) -> &mut File {
           &mut self.0
      }
 }
 
-impl Drop for FlockUnlock {
+impl Drop for FlockFnUnlock {
      fn drop(&mut self) {
           let _e = crate::sys::unlock(&self.0);
      }
 }
 
 impl ExclusiveFlockFn for File {
-     type ExclusiveLockFn = FlockUnlock;
+     type ExclusiveLockFn = FlockFnUnlock;
 
      fn wait_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
           crate::sys::wait_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
@@ -82,7 +83,7 @@ impl ExclusiveFlockFn for File {
 }
 
 impl SharedFlockFn for File {
-     type SharedLockFn = FlockUnlock;
+     type SharedLockFn = FlockFnUnlock;
 
      fn wait_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
           crate::sys::wait_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
@@ -98,21 +99,21 @@ impl SharedFlockFn for File {
 
 ///The type used in closure automatically will unblock 'flock' at destruction of type.
 #[derive(Debug)]
-pub struct SliceFlockUnlock<'a>(&'a File);
-impl<'a> FlockLock for SliceFlockUnlock<'a> {}
+pub struct SliceFlockFnUnlock<'a>(&'a File);
+impl<'a> FlockLock for SliceFlockFnUnlock<'a> {}
 
 
-impl<'a, F: FnMut(SliceFlockUnlock<'a>) -> R, R> RawConstFlock for (SliceFlockUnlock<'a>, PhantomData<F>, PhantomData<R>) {
+impl<'a, F: FnMut(SliceFlockFnUnlock<'a>) -> R, R> RawConstFlock for (SliceFlockFnUnlock<'a>, PhantomData<F>, PhantomData<R>) {
      type Lock = R;
      type Arg = (&'a File, F);
 
      #[inline(always)]
      fn next((file, mut f): Self::Arg) -> Self::Lock {
-          f(SliceFlockUnlock(file))
+          f(SliceFlockFnUnlock(file))
      }
 }
 
-impl<'a> crate::FlockUnlock for SliceFlockUnlock<'a> {
+impl<'a> FlockUnlock for SliceFlockFnUnlock<'a> {
      type ResultUnlock = ();
 
 
@@ -123,7 +124,7 @@ impl<'a> crate::FlockUnlock for SliceFlockUnlock<'a> {
 
 
 
-impl<'a> Deref for SliceFlockUnlock<'a> {
+impl<'a> Deref for SliceFlockFnUnlock<'a> {
      type Target = File;
 
      #[inline(always)]
@@ -132,21 +133,21 @@ impl<'a> Deref for SliceFlockUnlock<'a> {
      }
 }
 
-impl<'a> AsRef<File> for SliceFlockUnlock<'a> {
+impl<'a> AsRef<File> for SliceFlockFnUnlock<'a> {
      #[inline(always)]
      fn as_ref(&self) -> &File {
           self.0
      }
 }
 
-impl<'a> Drop for SliceFlockUnlock<'a> {
+impl<'a> Drop for SliceFlockFnUnlock<'a> {
      fn drop(&mut self) {
           let _e = crate::sys::unlock(self.0);
      }
 }
 
 impl<'a> ExclusiveFlockFn for &'a File {
-     type ExclusiveLockFn = SliceFlockUnlock<'a>;
+     type ExclusiveLockFn = SliceFlockFnUnlock<'a>;
 
      fn wait_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
           crate::sys::wait_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
@@ -158,7 +159,7 @@ impl<'a> ExclusiveFlockFn for &'a File {
 }
 
 impl<'a> SharedFlockFn for &'a File {
-     type SharedLockFn = SliceFlockUnlock<'a>;
+     type SharedLockFn = SliceFlockFnUnlock<'a>;
 
      fn wait_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
           crate::sys::wait_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
@@ -174,22 +175,22 @@ impl<'a> SharedFlockFn for &'a File {
 
 ///The type used in closure automatically will unblock 'flock' at destruction of type.
 #[derive(Debug)]
-pub struct MutSliceFlockUnlock<'a>(&'a mut File);
-impl<'a> FlockLock for MutSliceFlockUnlock<'a> {}
+pub struct MutSliceFlockFnUnlock<'a>(&'a mut File);
+impl<'a> FlockLock for MutSliceFlockFnUnlock<'a> {}
 
 
-impl<'a, F: FnMut(MutSliceFlockUnlock<'a>) -> R, R> RawConstFlock for (MutSliceFlockUnlock<'a>, PhantomData<F>, PhantomData<R>) {
+impl<'a, F: FnMut(MutSliceFlockFnUnlock<'a>) -> R, R> RawConstFlock for (MutSliceFlockFnUnlock<'a>, PhantomData<F>, PhantomData<R>) {
      type Lock = R;
      type Arg = (&'a mut File, F);
 
      #[inline(always)]
      fn next((file, mut f): Self::Arg) -> Self::Lock {
-          f(MutSliceFlockUnlock(file))
+          f(MutSliceFlockFnUnlock(file))
      }
 }
 
 
-impl<'a> crate::FlockUnlock for MutSliceFlockUnlock<'a> {
+impl<'a> FlockUnlock for MutSliceFlockFnUnlock<'a> {
      type ResultUnlock = ();
 
 
@@ -198,7 +199,7 @@ impl<'a> crate::FlockUnlock for MutSliceFlockUnlock<'a> {
      }
 }
 
-impl<'a> Deref for MutSliceFlockUnlock<'a> {
+impl<'a> Deref for MutSliceFlockFnUnlock<'a> {
      type Target = File;
 
      #[inline(always)]
@@ -206,27 +207,27 @@ impl<'a> Deref for MutSliceFlockUnlock<'a> {
           self.0
      }
 }
-impl<'a> DerefMut for MutSliceFlockUnlock<'a> {
+impl<'a> DerefMut for MutSliceFlockFnUnlock<'a> {
      #[inline(always)]
      fn deref_mut(&mut self) -> &mut Self::Target {
           self.0
      }
 }
 
-impl<'a> AsRef<File> for MutSliceFlockUnlock<'a> {
+impl<'a> AsRef<File> for MutSliceFlockFnUnlock<'a> {
      #[inline(always)]
      fn as_ref(&self) -> &File {
           self.0
      }
 }
-impl<'a> AsMut<File> for MutSliceFlockUnlock<'a> {
+impl<'a> AsMut<File> for MutSliceFlockFnUnlock<'a> {
      #[inline(always)]
      fn as_mut(&mut self) -> &mut File {
           self.0
      }
 }
 
-impl<'a> Drop for MutSliceFlockUnlock<'a> {
+impl<'a> Drop for MutSliceFlockFnUnlock<'a> {
      fn drop(&mut self) {
           let _e = crate::sys::unlock(&self.0);
      }
@@ -234,7 +235,7 @@ impl<'a> Drop for MutSliceFlockUnlock<'a> {
 
 
 impl<'a> ExclusiveFlockFn for &'a mut File {
-     type ExclusiveLockFn = MutSliceFlockUnlock<'a>;
+     type ExclusiveLockFn = MutSliceFlockFnUnlock<'a>;
 
      fn wait_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
           crate::sys::wait_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
@@ -246,7 +247,7 @@ impl<'a> ExclusiveFlockFn for &'a mut File {
 }
 
 impl<'a> SharedFlockFn for &'a mut File {
-     type SharedLockFn = MutSliceFlockUnlock<'a>;
+     type SharedLockFn = MutSliceFlockFnUnlock<'a>;
 
      fn wait_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
           crate::sys::wait_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
