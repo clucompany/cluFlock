@@ -9,6 +9,10 @@ use std::fs;
 use std::io;
 use std::fs::OpenOptions;
 
+//Example
+//The temporary file for interprogram synchronization.
+
+
 #[derive(Debug)]
 pub struct MyLockFile<'a>(FileFlock, Option<&'a Path>);
 
@@ -32,6 +36,11 @@ impl<'a> MyLockFile<'a> {
 
 impl<'a> Drop for MyLockFile<'a> {
      fn drop(&mut self) {
+          //Not obligatory action.
+          //
+
+          //Not to delete the file if it initially existed.
+
           if let Some(path) = self.1 {
                let _e = fs::remove_file(path);
           }

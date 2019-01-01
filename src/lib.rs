@@ -32,11 +32,11 @@ Control of lock of the file using the 'flock' functions.
 
 # Use
 
-1. Exclusive FileFlock
+1. Exclusive LockFile
 ```
 extern crate cluFlock;
 
-use cluFlock::Flock;
+use cluFlock::ToFlock;
 use std::fs::File;
 use std::io;
 
@@ -45,73 +45,48 @@ fn main() -> Result<(), io::Error> {
 
      println!("{:?}", file_lock);
      
-     drop(file_lock);
+     drop(file_lock); //<-- unlock fn.
 
      Ok( () )
 }
 ```
 
-2. Try SliceFlockFile
+
+2. Exclusive LockClosure
+
 ```
 extern crate cluFlock;
 
-use cluFlock::ExclusiveFlock;
+use std::io::Write;
+use cluFlock::ToFlock;
 use std::fs::File;
-use std::time::Duration;
-use std::io::ErrorKind;
+use std::io;
 
-fn main() {
-     let file: File = match File::create("/tmp/ulin.lock") {
-          Ok(a) => a,
-          Err(e) => panic!("Panic, err create file {:?}", e),
-     };
+fn main() -> Result<(), io::Error> {
+     File::create("/tmp/1")?.wait_exclusive_lock_fn(|mut file| {
+          write!(file,  "Test.")
+     })??;
 
-     println!("Try_Exclusive_Lock, {:?}", file);
-
-     let lock = match ExclusiveFlock::try_lock(&file) {
-          //Success, we blocked the file.
-          Ok(lock) => {
-               println!("File {:?} successfully locked.", file);
-
-               
-               lock
-          },
-          
-          //File already locked.
-          Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
-               println!("ALREADY LOCKED: File {:?}.", file);
-
-               println!("!Exclusive_Lock, {:?}", file);
-               
-               //Lock the current thread to such an extent until your file is unlocked.
-               //&file.wait_exclusive_lock().unwrap()
-               ExclusiveFlock::wait_lock(&file).unwrap()
-          },
-          
-          Err(e) => panic!("Panic, err lock file {:?}", e)
-
-     };
-
-     println!("Sleep, 5s");
-     ::std::thread::sleep(Duration::from_secs(5));
-
-     println!("Unlock, {:?}", file);
-     drop(lock);
+     Ok( () )
 }
 ```
 
-3. FileFlock (Lock file)
+3. The temporary file for interprogram synchronization
 
 ```
 extern crate cluFlock;
 
-use cluFlock::Flock;
+use cluFlock::ToFlock;
 use cluFlock::FileFlock;
 use std::io::ErrorKind::AlreadyExists;
 use std::path::Path;
 use std::fs;
 use std::io;
 use std::fs::OpenOptions;
+
+//Example
+//The temporary file for interprogram synchronization.
+
 
 #[derive(Debug)]
 pub struct MyLockFile<'a>(FileFlock, Option<&'a Path>);
@@ -136,6 +111,11 @@ impl<'a> MyLockFile<'a> {
 
 impl<'a> Drop for MyLockFile<'a> {
      fn drop(&mut self) {
+          //Not obligatory action.
+          //
+
+          //Not to delete the file if it initially existed.
+
           if let Some(path) = self.1 {
                let _e = fs::remove_file(path);
           }
@@ -159,6 +139,11 @@ pub fn main() -> Result<(), io::Error> {
      Ok( () )
 }
 ```
+
+# License
+
+Copyright 2018 #UlinProject Денис Котляров
+Licensed under the Apache License, Version 2.0
 
 */
 

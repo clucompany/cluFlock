@@ -10,7 +10,7 @@ fn main() -> Result<(), io::Error> {
 
      println!("{:?}", file_lock);
      
-     drop(file_lock);
+     drop(file_lock); //<-- unlock fn.
 
      Ok( () )
 }

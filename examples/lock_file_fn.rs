@@ -8,7 +8,8 @@ use cluFlock::ExclusiveFlockFn;
 
 fn main() -> Result<(), io::Error> {
 
-     //Synchronous writing to a file between two or more processes.
+     //Two and more applications consistently write down data in the file.
+
      
      let program_pid = unsafe{ libc::getpid() };
      println!("[{}] Init...", program_pid);
