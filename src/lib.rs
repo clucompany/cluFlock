@@ -227,7 +227,6 @@ pub trait ExclusiveFlock: Debug {
      type ExclusiveLock: FlockLock;
 
      fn try_lock(self) -> Result<Self::ExclusiveLock, io::Error>;
-     
      fn wait_lock(self) -> Result<Self::ExclusiveLock, io::Error>;
 }
 

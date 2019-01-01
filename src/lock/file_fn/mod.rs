@@ -25,6 +25,16 @@ impl<F: FnMut(FlockUnlock) -> R, R> RawConstFlock for (FlockUnlock, PhantomData<
      }
 }
 
+impl crate::FlockUnlock for FlockUnlock {
+     type ResultUnlock = ();
+
+
+     fn unlock(self) -> Self::ResultUnlock {
+          
+     }
+}
+
+
 impl Deref for FlockUnlock {
      type Target = File;
 
@@ -102,6 +112,16 @@ impl<'a, F: FnMut(SliceFlockUnlock<'a>) -> R, R> RawConstFlock for (SliceFlockUn
      }
 }
 
+impl<'a> crate::FlockUnlock for SliceFlockUnlock<'a> {
+     type ResultUnlock = ();
+
+
+     fn unlock(self) -> Self::ResultUnlock {
+          
+     }
+}
+
+
 
 impl<'a> Deref for SliceFlockUnlock<'a> {
      type Target = File;
@@ -168,6 +188,15 @@ impl<'a, F: FnMut(MutSliceFlockUnlock<'a>) -> R, R> RawConstFlock for (MutSliceF
      }
 }
 
+
+impl<'a> crate::FlockUnlock for MutSliceFlockUnlock<'a> {
+     type ResultUnlock = ();
+
+
+     fn unlock(self) -> Self::ResultUnlock {
+          
+     }
+}
 
 impl<'a> Deref for MutSliceFlockUnlock<'a> {
      type Target = File;
