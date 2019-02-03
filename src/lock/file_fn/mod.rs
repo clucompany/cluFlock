@@ -17,81 +17,81 @@ impl FlockLock for FlockFnUnlock {}
 
 
 impl<F: FnMut(FlockFnUnlock) -> R, R> RawConstFlock for (FlockFnUnlock, PhantomData<F>, PhantomData<R>) {
-     type Lock = R;
-     type Arg = (File, F);
+	type Lock = R;
+	type Arg = (File, F);
 
-     #[inline(always)]
-     fn next((file, mut f): Self::Arg) -> Self::Lock {
-          f(FlockFnUnlock(file))
-     }
+	#[inline(always)]
+	fn next((file, mut f): Self::Arg) -> Self::Lock {
+		f(FlockFnUnlock(file))
+	}
 }
 
 impl FlockUnlock for FlockFnUnlock {
-     type ResultUnlock = ();
+	type ResultUnlock = ();
 
 
-     fn unlock(self) -> Self::ResultUnlock {
-          
-     }
+	fn unlock(self) -> Self::ResultUnlock {
+		
+	}
 }
 
 
 impl Deref for FlockFnUnlock {
-     type Target = File;
+	type Target = File;
 
-     #[inline(always)]
-     fn deref(&self) -> &Self::Target {
-          &self.0
-     }
+	#[inline(always)]
+	fn deref(&self) -> &Self::Target {
+		&self.0
+	}
 }
 impl DerefMut for FlockFnUnlock {
-     #[inline(always)]
-     fn deref_mut(&mut self) -> &mut Self::Target {
-          &mut self.0
-     }
+	#[inline(always)]
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		&mut self.0
+	}
 }
 
 impl AsRef<File> for FlockFnUnlock {
-     #[inline(always)]
-     fn as_ref(&self) -> &File {
-          &self.0
-     }
+	#[inline(always)]
+	fn as_ref(&self) -> &File {
+		&self.0
+	}
 }
 impl AsMut<File> for FlockFnUnlock {
-     #[inline(always)]
-     fn as_mut(&mut self) -> &mut File {
-          &mut self.0
-     }
+	#[inline(always)]
+	fn as_mut(&mut self) -> &mut File {
+		&mut self.0
+	}
 }
 
 impl Drop for FlockFnUnlock {
-     fn drop(&mut self) {
-          let _e = crate::sys::unlock(&self.0);
-     }
+	fn drop(&mut self) {
+		let _e = crate::sys::unlock(&self.0);
+	}
 }
 
 impl ExclusiveFlockFn for File {
-     type ExclusiveLockFn = FlockFnUnlock;
+	type ExclusiveLockFn = FlockFnUnlock;
 
-     fn wait_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
-          crate::sys::wait_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
-     }
-     
-     fn try_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
-          crate::sys::try_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
-     }
+	fn wait_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
+		crate::sys::wait_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
+	}
+	
+	fn try_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
+		crate::sys::try_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
+	}
 }
 
 impl SharedFlockFn for File {
-     type SharedLockFn = FlockFnUnlock;
+	type SharedLockFn = FlockFnUnlock;
 
-     fn wait_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
-          crate::sys::wait_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
-     }
-     
-     fn try_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
-          crate::sys::try_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
-     }
+	fn wait_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
+		crate::sys::wait_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
+	}
+	
+	fn try_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
+		crate::sys::try_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
+	}
 }
 
 
@@ -104,70 +104,70 @@ impl<'a> FlockLock for SliceFlockFnUnlock<'a> {}
 
 
 impl<'a, F: FnMut(SliceFlockFnUnlock<'a>) -> R, R> RawConstFlock for (SliceFlockFnUnlock<'a>, PhantomData<F>, PhantomData<R>) {
-     type Lock = R;
-     type Arg = (&'a File, F);
+	type Lock = R;
+	type Arg = (&'a File, F);
 
-     #[inline(always)]
-     fn next((file, mut f): Self::Arg) -> Self::Lock {
-          f(SliceFlockFnUnlock(file))
-     }
+	#[inline(always)]
+	fn next((file, mut f): Self::Arg) -> Self::Lock {
+		f(SliceFlockFnUnlock(file))
+	}
 }
 
 impl<'a> FlockUnlock for SliceFlockFnUnlock<'a> {
-     type ResultUnlock = ();
+	type ResultUnlock = ();
 
 
-     fn unlock(self) -> Self::ResultUnlock {
-          
-     }
+	fn unlock(self) -> Self::ResultUnlock {
+		
+	}
 }
 
 
 
 impl<'a> Deref for SliceFlockFnUnlock<'a> {
-     type Target = File;
+	type Target = File;
 
-     #[inline(always)]
-     fn deref(&self) -> &Self::Target {
-          self.0
-     }
+	#[inline(always)]
+	fn deref(&self) -> &Self::Target {
+		self.0
+	}
 }
 
 impl<'a> AsRef<File> for SliceFlockFnUnlock<'a> {
-     #[inline(always)]
-     fn as_ref(&self) -> &File {
-          self.0
-     }
+	#[inline(always)]
+	fn as_ref(&self) -> &File {
+		self.0
+	}
 }
 
 impl<'a> Drop for SliceFlockFnUnlock<'a> {
-     fn drop(&mut self) {
-          let _e = crate::sys::unlock(self.0);
-     }
+	fn drop(&mut self) {
+		let _e = crate::sys::unlock(self.0);
+	}
 }
 
 impl<'a> ExclusiveFlockFn for &'a File {
-     type ExclusiveLockFn = SliceFlockFnUnlock<'a>;
+	type ExclusiveLockFn = SliceFlockFnUnlock<'a>;
 
-     fn wait_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
-          crate::sys::wait_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
-     }
-     
-     fn try_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
-          crate::sys::try_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
-     }
+	fn wait_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
+		crate::sys::wait_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
+	}
+	
+	fn try_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
+		crate::sys::try_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
+	}
 }
 
 impl<'a> SharedFlockFn for &'a File {
-     type SharedLockFn = SliceFlockFnUnlock<'a>;
+	type SharedLockFn = SliceFlockFnUnlock<'a>;
 
-     fn wait_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
-          crate::sys::wait_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
-     }
-     
-     fn try_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
-          crate::sys::try_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
-     }
+	fn wait_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
+		crate::sys::wait_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
+	}
+	
+	fn try_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
+		crate::sys::try_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
+	}
 }
 
 
@@ -180,80 +180,80 @@ impl<'a> FlockLock for MutSliceFlockFnUnlock<'a> {}
 
 
 impl<'a, F: FnMut(MutSliceFlockFnUnlock<'a>) -> R, R> RawConstFlock for (MutSliceFlockFnUnlock<'a>, PhantomData<F>, PhantomData<R>) {
-     type Lock = R;
-     type Arg = (&'a mut File, F);
+	type Lock = R;
+	type Arg = (&'a mut File, F);
 
-     #[inline(always)]
-     fn next((file, mut f): Self::Arg) -> Self::Lock {
-          f(MutSliceFlockFnUnlock(file))
-     }
+	#[inline(always)]
+	fn next((file, mut f): Self::Arg) -> Self::Lock {
+		f(MutSliceFlockFnUnlock(file))
+	}
 }
 
 
 impl<'a> FlockUnlock for MutSliceFlockFnUnlock<'a> {
-     type ResultUnlock = ();
+	type ResultUnlock = ();
 
 
-     fn unlock(self) -> Self::ResultUnlock {
-          
-     }
+	fn unlock(self) -> Self::ResultUnlock {
+		
+	}
 }
 
 impl<'a> Deref for MutSliceFlockFnUnlock<'a> {
-     type Target = File;
+	type Target = File;
 
-     #[inline(always)]
-     fn deref(&self) -> &Self::Target {
-          self.0
-     }
+	#[inline(always)]
+	fn deref(&self) -> &Self::Target {
+		self.0
+	}
 }
 impl<'a> DerefMut for MutSliceFlockFnUnlock<'a> {
-     #[inline(always)]
-     fn deref_mut(&mut self) -> &mut Self::Target {
-          self.0
-     }
+	#[inline(always)]
+	fn deref_mut(&mut self) -> &mut Self::Target {
+		self.0
+	}
 }
 
 impl<'a> AsRef<File> for MutSliceFlockFnUnlock<'a> {
-     #[inline(always)]
-     fn as_ref(&self) -> &File {
-          self.0
-     }
+	#[inline(always)]
+	fn as_ref(&self) -> &File {
+		self.0
+	}
 }
 impl<'a> AsMut<File> for MutSliceFlockFnUnlock<'a> {
-     #[inline(always)]
-     fn as_mut(&mut self) -> &mut File {
-          self.0
-     }
+	#[inline(always)]
+	fn as_mut(&mut self) -> &mut File {
+		self.0
+	}
 }
 
 impl<'a> Drop for MutSliceFlockFnUnlock<'a> {
-     fn drop(&mut self) {
-          let _e = crate::sys::unlock(&self.0);
-     }
+	fn drop(&mut self) {
+		let _e = crate::sys::unlock(&self.0);
+	}
 }
 
 
 impl<'a> ExclusiveFlockFn for &'a mut File {
-     type ExclusiveLockFn = MutSliceFlockFnUnlock<'a>;
+	type ExclusiveLockFn = MutSliceFlockFnUnlock<'a>;
 
-     fn wait_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
-          crate::sys::wait_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
-     }
-     
-     fn try_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
-          crate::sys::try_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
-     }
+	fn wait_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
+		crate::sys::wait_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
+	}
+	
+	fn try_lock_fn<A: FnMut(Self::ExclusiveLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
+		crate::sys::try_lock_exclusive::<(Self::ExclusiveLockFn, _, _)>((self, f))
+	}
 }
 
 impl<'a> SharedFlockFn for &'a mut File {
-     type SharedLockFn = MutSliceFlockFnUnlock<'a>;
+	type SharedLockFn = MutSliceFlockFnUnlock<'a>;
 
-     fn wait_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
-          crate::sys::wait_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
-     }
-     
-     fn try_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
-          crate::sys::try_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
-     }
+	fn wait_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
+		crate::sys::wait_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
+	}
+	
+	fn try_lock_fn<A: FnMut(Self::SharedLockFn) -> R, R>(self, f: A) -> Result<R, io::Error> {
+		crate::sys::try_lock_shared::<(Self::SharedLockFn, _, _)>((self, f))
+	}
 }
