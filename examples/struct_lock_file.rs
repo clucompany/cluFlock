@@ -1,8 +1,9 @@
 
 extern crate cluFlock;
 
+use std::fs::File;
+use cluFlock::FlockLock;
 use cluFlock::ToFlock;
-use cluFlock::FileFlock;
 use std::io::ErrorKind::AlreadyExists;
 use std::path::Path;
 use std::fs;
@@ -14,7 +15,7 @@ use std::fs::OpenOptions;
 
 
 #[derive(Debug)]
-pub struct MyLockFile<'a>(FileFlock, Option<&'a Path>);
+pub struct MyLockFile<'a>(FlockLock<File>, Option<&'a Path>);
 
 impl<'a> MyLockFile<'a> {
 	pub fn new(p: &'a Path) -> Result<Self, io::Error> {

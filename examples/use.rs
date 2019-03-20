@@ -9,7 +9,6 @@ fn main() -> Result<(), io::Error> {
 	let file_lock = File::create("/tmp/1")?.wait_exclusive_lock()?;
 
 	println!("{:?}", file_lock);
-	
 	drop(file_lock); //<-- unlock fn.
 
 	Ok( () )

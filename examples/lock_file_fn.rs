@@ -34,12 +34,12 @@ fn main() -> Result<(), io::Error> {
 			println!("[{}][{}] Write file, {:?}", program_pid, num, file);
 
 			let result = match write!(file, "[{}][{}]{}->{}\n", program_pid, num, old_len, new_len) {
-					Ok(a) => {
-						file.sync_all()?; 
+				Ok(a) => {
+					file.sync_all()?; 
 
-						Ok(a)
-					},
-					a => a,
+					Ok(a)
+				},
+				a => a,
 			};
 
 			new_len = {metadata = file.metadata()?; metadata.len()};

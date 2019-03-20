@@ -18,7 +18,7 @@ fn main() {
 	let lock = match ExclusiveFlock::try_lock(&file) {
 		//Success, we blocked the file.
 		Ok(lock) => {
-			println!("File {:?} successfully locked.", file);
+			println!("OK, File {:?} successfully locked.", file);
 
 			
 			lock
