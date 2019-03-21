@@ -19,14 +19,14 @@ impl<T> Deref for FlockLock<T> where T: FlockElement + FlockUnlock {
 	
 	#[inline(always)]
 	fn deref(&self) -> &Self::Target {
-		&self.element	
+		&self.element
 	}
 }
 
 impl<T> DerefMut for FlockLock<T> where T: FlockElement + FlockUnlock {
 	#[inline(always)]
 	fn deref_mut(&mut self) -> &mut Self::Target {
-		&mut self.element	
+		&mut self.element
 	}
 }
 

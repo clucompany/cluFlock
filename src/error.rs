@@ -9,7 +9,7 @@ pub struct FlockError<T> {
 }
 
 impl<T> FlockError<T> {
-	pub fn new(a: T, err: io::Error) -> Self {
+	pub const fn new(a: T, err: io::Error) -> Self {
 		Self {
 			value: a,
 			error: err,

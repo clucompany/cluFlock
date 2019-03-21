@@ -1,3 +1,6 @@
+#![feature(const_fn)]
+#![allow(non_snake_case)]
+
 //Copyright 2019 #UlinProject Денис Котляров
 
 //Licensed under the Apache License, Version 2.0 (the "License");
@@ -146,7 +149,7 @@ mod sys {
 }
 
 mod to;
-use crate::sys::FlockElement;
+pub use crate::sys::FlockElement;
 pub use self::to::*;
 
 mod unlock;
@@ -157,9 +160,6 @@ pub use self::error::*;
 
 mod lock;
 pub use self::lock::*;
-
-mod function;
-pub use self::function::*;
 
 ///Set a shared lock. A shared lock on a given file can hold more than one process.
 pub trait SharedFlock: FlockElement + FlockUnlock + Sized {	

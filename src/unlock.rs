@@ -6,8 +6,9 @@ use std::ops::DerefMut;
 use std::ops::Deref;
 use std::io;
 
-pub trait FlockUnlock {	
-	fn flock_unlock(&mut self) -> Result<(), io::Error>;
+pub trait FlockUnlock {
+	type ResultUnlock;
+	fn flock_unlock(&mut self) -> Result<Self::ResultUnlock, io::Error>;
 }
 
 
@@ -18,9 +19,9 @@ pub struct UnlockFlock<T> where T: FlockUnlock {
 
 impl<T> UnlockFlock<T> where T: FlockUnlock {
 	#[inline]
-	pub fn new(t: T) -> Self {
+	pub const fn new(t: T) -> Self {
 		Self {
-			value: t	
+			value: t
 		}
 	}
 }

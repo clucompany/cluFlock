@@ -65,6 +65,7 @@ impl<'a> FlockElement for &'a dyn FlockElement {
 
 
 impl<T> FlockUnlock for T where T: FlockElement {
+	type ResultUnlock = ();
 	fn flock_unlock(&mut self) -> Result<(), io::Error> {
 		match unsafe { libc::flock(self.as_raw_fd(), libc::LOCK_UN) } {
 			0 => {},
