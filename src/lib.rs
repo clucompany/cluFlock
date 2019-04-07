@@ -20,22 +20,11 @@
 //
 
 /*!
-Control of lock of the file using the 'flock' functions.
-
-
-# Capabilities
-
-1. Convenient and transparent trait of a call of locks.
-2. Automatic unlocking of lock.
-
-# Locks
-
-1. ExclusiveFlock - To establish exclusive blocking. Only one process can hold exclusive blocking of the file..
-2. SharedFlock - Set a shared lock. A shared lock on a given file can hold more than one process.
+Establishes and safely deletes advisory blocking on the open file.
 
 # Use
-
 1. Exclusive LockFile
+
 ```
 extern crate cluFlock;
 
@@ -47,15 +36,13 @@ fn main() -> Result<(), io::Error> {
 	let file_lock = File::create("/tmp/1")?.wait_exclusive_lock()?;
 
 	println!("{:?}", file_lock);
-	
 	drop(file_lock); //<-- unlock fn.
 
 	Ok( () )
 }
 ```
 
-
-2. Exclusive LockClosure
+2. Exclusive LockFile (FnOnce)
 
 ```
 extern crate cluFlock;
@@ -74,74 +61,86 @@ fn main() -> Result<(), io::Error> {
 }
 ```
 
-3. The temporary file for interprogram synchronization
+3. Exclusive LockFile (&File)
 
 ```
+
+
 extern crate cluFlock;
 
-use cluFlock::ToFlock;
-use cluFlock::FileFlock;
-use std::io::ErrorKind::AlreadyExists;
-use std::path::Path;
-use std::fs;
-use std::io;
-use std::fs::OpenOptions;
+use cluFlock::ExclusiveFlock;
+use std::fs::File;
 
-//Example
-//The temporary file for interprogram synchronization.
+fn main() -> Result<(), std::io::Error> {
+	let file = File::create("/tmp/1").unwrap();
 
+	let file_lock = ExclusiveFlock::wait_lock(&file)?;
+	//lock...
 
-#[derive(Debug)]
-pub struct MyLockFile<'a>(FileFlock, Option<&'a Path>);
+	println!("{:?}", file_lock);
+	
+	// let file move! 
+	drop(file_lock);
 
-impl<'a> MyLockFile<'a> {
-	pub fn new(p: &'a Path) -> Result<Self, io::Error> {
-		let (lock, path) = match OpenOptions::new().write(true).create_new(true).open(p) {
-			Ok(file) => (file.wait_exclusive_lock()?, Some(p)),
-			Err(ref e) if e.kind() == AlreadyExists => {
-					let f = OpenOptions::new().read(true).open(p)?; 
-
-					let lock = f.try_exclusive_lock()?;
-
-					(lock, None)
-			},
-			Err(e) => return Err(e),
-		};
-
-		Ok( MyLockFile(lock, path) )
-	}
-}
-
-impl<'a> Drop for MyLockFile<'a> {
-	fn drop(&mut self) {
-		//Not obligatory action.
-		//
-
-		//Not to delete the file if it initially existed.
-
-		if let Some(path) = self.1 {
-			let _e = fs::remove_file(path);
-		}
-	}
-}
-
-
-pub fn main() -> Result<(), io::Error> {
-	let path = Path::new("/tmp/flock.lock");
-	println!("LockFile {:?}", path);
-	let lock_file = MyLockFile::new(path)?;
-
-	println!("OK! FileFlock {:?}", lock_file);
-	for a in 0..4 {
-		println!("Sleep {}", a);
-		::std::thread::sleep(::std::time::Duration::from_secs(1));
-	}
-
-	drop(lock_file);
+	file.sync_all()?;
 
 	Ok( () )
 }
-``*/
+```
+
+4. LockFile (use try_exclusive_lock)
+
+```
+
+
+extern crate cluFlock;
+
+use cluFlock::ExclusiveFlock;
+use std::fs::File;
+use std::time::Duration;
+use std::io::ErrorKind;
+
+fn main() {
+	let file: File = match File::create("/tmp/ulin.lock") {
+		Ok(a) => a,
+		Err(e) => panic!("Panic, err create file {:?}", e),
+	};
+
+	println!("Try_Exclusive_Lock, {:?}", file);
+
+	let lock = match ExclusiveFlock::try_lock(&file) {
+		//Success, we blocked the file.
+		Ok(lock) => {
+			println!("OK, File {:?} successfully locked.", file);
+
+			
+			lock
+		},
+		
+		//File already locked.
+		Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
+			println!("ALREADY LOCKED: File {:?}.", file);
+
+			println!("!Exclusive_Lock, {:?}", file);
+			
+			//Lock the current thread to such an extent until your file is unlocked.
+			//&file.wait_exclusive_lock().unwrap()
+			ExclusiveFlock::wait_lock(&file).unwrap()
+		},
+		
+		Err(e) => panic!("Panic, err lock file {:?}", e)
+
+	};
+
+	println!("Sleep, 5s");
+	::std::thread::sleep(Duration::from_secs(5));
+
+	println!("Unlock, {:?}", file);
+	drop(lock);
+}
+```
+
+*/
 
 mod os_release;
 mod sys {
