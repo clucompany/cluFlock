@@ -16,6 +16,7 @@ use std::os::unix::io::RawFd;
 use std::io;
 
 
+#[doc(hidden)]
 pub trait FlockElement {
 	fn as_raw_fd(&self) -> RawFd;
 }
