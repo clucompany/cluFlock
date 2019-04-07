@@ -1,4 +1,4 @@
-#![feature(const_fn)]
+//#![feature(const_fn)]
 #![allow(non_snake_case)]
 
 //Copyright 2019 #UlinProject Денис Котляров

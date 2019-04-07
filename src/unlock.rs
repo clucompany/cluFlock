@@ -19,7 +19,7 @@ pub struct UnlockFlock<T> where T: FlockUnlock {
 
 impl<T> UnlockFlock<T> where T: FlockUnlock {
 	#[inline]
-	pub const fn new(t: T) -> Self {
+	pub fn new(t: T) -> Self {
 		Self {
 			value: t
 		}
