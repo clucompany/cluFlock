@@ -10,7 +10,7 @@ Establishes and safely deletes advisory blocking on the open file.
 # Use
 1. Exclusive LockFile
 
-```
+```rust
 extern crate cluFlock;
 
 use cluFlock::ToFlock;
@@ -29,7 +29,7 @@ fn main() -> Result<(), io::Error> {
 
 2. Exclusive LockFile (FnOnce)
 
-```
+```rust
 extern crate cluFlock;
 
 use std::io::Write;
@@ -48,9 +48,7 @@ fn main() -> Result<(), io::Error> {
 
 3. Exclusive LockFile (&File)
 
-```
-
-
+```rust
 extern crate cluFlock;
 
 use cluFlock::ExclusiveFlock;
@@ -75,9 +73,7 @@ fn main() -> Result<(), std::io::Error> {
 
 4. LockFile (use try_exclusive_lock)
 
-```
-
-
+```rust
 extern crate cluFlock;
 
 use cluFlock::ExclusiveFlock;
@@ -124,8 +120,6 @@ fn main() {
 	drop(lock);
 }
 ```
-
-
 
 # License
 
