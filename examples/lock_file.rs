@@ -1,7 +1,4 @@
 
-
-extern crate cluFlock;
-
 use cluFlock::ExclusiveFlock;
 use std::fs::File;
 use std::time::Duration;

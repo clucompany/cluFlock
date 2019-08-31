@@ -1,5 +1,8 @@
+#![feature(specialization)]
 //#![feature(const_fn)]
+
 #![allow(non_snake_case)]
+
 
 //Copyright 2019 #UlinProject Денис Котляров
 
@@ -16,7 +19,7 @@
 // limitations under the License.
 
 
-//#Ulin Project 1718
+//#Ulin Project 1819
 //
 
 /*!
@@ -142,52 +145,67 @@ fn main() {
 
 */
 
-mod os_release;
-mod sys {
-	pub use crate::os_release::*;
+#![cfg_attr(nightly, feature(nightly))]
+
+//os_release
+mod os_release {
+	#[cfg(unix)]
+	pub mod unix;
+	
+	pub mod r#dyn;
 }
+pub (crate) use os_release::r#dyn::*;
+
+#[doc(hidden)]
+pub (crate) mod sys {
+	#[cfg(unix)]
+	pub use crate::os_release::unix::*;
+}
+
+mod data {
+	pub mod err;
+	//pub use self::err::*;
+	
+	mod lock;
+	pub use self::lock::*;
+	
+	mod unlock;
+	pub use self::unlock::*;
+}
+pub use self::data::*;
+
+
+use sys::FlockElement;
+use crate::err::FlockError;
+use crate::data::err::FlockFnError;
+
 
 mod to;
-pub use crate::sys::FlockElement;
 pub use self::to::*;
 
-mod unlock;
-pub use self::unlock::*;
+mod r#fn;
+pub (crate) use self::r#fn::*;
 
-mod error;
-pub use self::error::*;
-
-mod lock;
-pub use self::lock::*;
 
 ///Set a shared lock. A shared lock on a given file can hold more than one process.
-pub trait SharedFlock: FlockElement + FlockUnlock + Sized {	
+pub trait SharedFlock where Self: FlockElement + FlockUnlock + Sized {	
 	fn try_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
 	fn wait_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
-}
-
-pub trait SharedFlockFn: FlockElement + FlockUnlock + Sized  {
-	fn try_lock_fn<A: FnOnce(UnlockFlock<Self>) -> R, R>(self, f: A) -> Result<R, FlockError<(Self, A)>>;
-	fn wait_lock_fn<A: FnOnce(UnlockFlock<Self>) -> R, R>(self, f: A) -> Result<R, FlockError<(Self, A)>>;
+	
+	fn try_lock_fn<Fn: FnOnce(SafeUnlockFlock<Self>) -> Fr, Fr>(self, f: Fn) -> Result<Fr, FlockFnError<Self, Fn, Fr>>;
+	fn wait_lock_fn<Fn: FnOnce(SafeUnlockFlock<Self>) -> Fr, Fr>(self, f: Fn) -> Result<Fr, FlockFnError<Self, Fn, Fr>>;
 }
 
 
 ///To establish exclusive blocking. Only one process can hold exclusive blocking of the file.
-pub trait ExclusiveFlock: FlockElement + FlockUnlock + Sized {	
+pub trait ExclusiveFlock where Self: FlockElement + FlockUnlock + Sized {	
 	fn try_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
 	fn wait_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
-}
-
-
-pub trait ExclusiveFlockFn: FlockElement + FlockUnlock + Sized  {
-	fn try_lock_fn<A: FnOnce(UnlockFlock<Self>) -> R, R>(self, f: A) -> Result<R, FlockError<(Self, A)>>;
-	fn wait_lock_fn<A: FnOnce(UnlockFlock<Self>) -> R, R>(self, f: A) -> Result<R, FlockError<(Self, A)>>;
-}
-
-
-pub (crate) trait RawConstructorElement {
-	type ConstResult;
-	type Arg: FlockElement;
 	
-	fn raw_constructor(t: Self::Arg) -> Self::ConstResult;
+	fn try_lock_fn<Fn: FnOnce(SafeUnlockFlock<Self>) -> Fr, Fr>(self, f: Fn) -> Result<Fr, FlockFnError<Self, Fn, Fr>>;
+	fn wait_lock_fn<Fn: FnOnce(SafeUnlockFlock<Self>) -> Fr, Fr>(self, f: Fn) -> Result<Fr, FlockFnError<Self, Fn, Fr>>;
 }
+
+
+
+

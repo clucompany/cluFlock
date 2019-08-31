@@ -1,15 +1,12 @@
 
-extern crate cluFlock;
-
 use std::io::Write;
 use std::io;
 use std::fs::OpenOptions;
-use cluFlock::ExclusiveFlockFn;
+use cluFlock::ExclusiveFlock;
 
 fn main() -> Result<(), io::Error> {
 
 	//Two and more applications consistently write down data in the file.
-
 	
 	let program_pid = unsafe{ libc::getpid() };
 	println!("[{}] Init...", program_pid);
@@ -30,7 +27,7 @@ fn main() -> Result<(), io::Error> {
 		println!("[{}][{}] WaitLock file, {:?}", program_pid, num, file);
 
 		
-		let result = ExclusiveFlockFn::wait_lock_fn(&mut file, |mut file| {
+		let result = ExclusiveFlock::wait_lock_fn(&mut file, |mut file| {
 			println!("[{}][{}] Write file, {:?}", program_pid, num, file);
 
 			let result = match write!(file, "[{}][{}]{}->{}\n", program_pid, num, old_len, new_len) {

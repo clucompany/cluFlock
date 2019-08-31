@@ -1,6 +1,4 @@
 
-extern crate cluFlock;
-
 use std::fs::File;
 use cluFlock::FlockLock;
 use cluFlock::ToFlock;
