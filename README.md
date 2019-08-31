@@ -116,6 +116,10 @@ fn main() {
 }
 ```
 
+# Library flags:
+1. nightly: Allows you to safely transform the lock into the original data, the night version of the compiler and the cluFullTransmute library are required.
+
+
 # License
 
 Copyright 2019 #UlinProject Denis Kotlyarov (Денис Котляров)
