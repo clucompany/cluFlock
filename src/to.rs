@@ -7,7 +7,7 @@ use crate::SharedFlock;
 use crate::FlockLock;
 use crate::err::FlockError;
 
-///Constructor, generalized for 'Flock'
+/// Convenient conversion of previously used values ​​to cluFlock.
 pub trait ToFlock where Self: Sized {
 	fn wait_exclusive_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> where Self: ExclusiveFlock;
 	fn wait_exclusive_lock_fn<Fn: FnOnce(SafeUnlockFlock<Self>) -> Fr, Fr>(self, f: Fn) -> Result<Fr, FlockFnError<Self, Fn, Fr>> where Self: ExclusiveFlock;

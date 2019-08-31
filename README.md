@@ -5,14 +5,13 @@
 [![crates.io](http://meritbadge.herokuapp.com/cluFlock)](https://crates.io/crates/cluFlock)
 [![Documentation](https://docs.rs/cluFlock/badge.svg)](https://docs.rs/cluFlock)
 
-Establishes and safely deletes advisory blocking on the open file.
+Installation and subsequent safe removal of `flock` locks for data streams.
+
 
 # Use
 1. Exclusive LockFile
 
 ```rust
-extern crate cluFlock;
-
 use cluFlock::ToFlock;
 use std::fs::File;
 use std::io;
@@ -21,7 +20,7 @@ fn main() -> Result<(), io::Error> {
 	let file_lock = File::create("/tmp/1")?.wait_exclusive_lock()?;
 
 	println!("{:?}", file_lock);
-	drop(file_lock); //<-- unlock fn.
+	drop(file_lock); //<-- unlock file
 
 	Ok( () )
 }
@@ -30,8 +29,6 @@ fn main() -> Result<(), io::Error> {
 2. Exclusive LockFile (FnOnce)
 
 ```rust
-extern crate cluFlock;
-
 use std::io::Write;
 use cluFlock::ToFlock;
 use std::fs::File;
@@ -74,8 +71,6 @@ fn main() -> Result<(), std::io::Error> {
 4. LockFile (use try_exclusive_lock)
 
 ```rust
-extern crate cluFlock;
-
 use cluFlock::ExclusiveFlock;
 use std::fs::File;
 use std::time::Duration;
@@ -123,6 +118,6 @@ fn main() {
 
 # License
 
-Copyright 2019 #UlinProject Денис Котляров
+Copyright 2019 #UlinProject Denis Kotlyarov (Денис Котляров)
 
 Licensed under the Apache License, Version 2.0

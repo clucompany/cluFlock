@@ -23,14 +23,12 @@
 //
 
 /*!
-Establishes and safely deletes advisory blocking on the open file.
+Installation and subsequent safe removal of `flock` locks for data streams.
 
 # Use
 1. Exclusive LockFile
 
 ```
-extern crate cluFlock;
-
 use cluFlock::ToFlock;
 use std::fs::File;
 use std::io;
@@ -39,7 +37,7 @@ fn main() -> Result<(), io::Error> {
 	let file_lock = File::create("/tmp/1")?.wait_exclusive_lock()?;
 
 	println!("{:?}", file_lock);
-	drop(file_lock); //<-- unlock fn.
+	drop(file_lock); //<-- unlock file
 
 	Ok( () )
 }
@@ -48,8 +46,6 @@ fn main() -> Result<(), io::Error> {
 2. Exclusive LockFile (FnOnce)
 
 ```
-extern crate cluFlock;
-
 use std::io::Write;
 use cluFlock::ToFlock;
 use std::fs::File;
@@ -67,8 +63,6 @@ fn main() -> Result<(), io::Error> {
 3. Exclusive LockFile (&File)
 
 ```
-
-
 extern crate cluFlock;
 
 use cluFlock::ExclusiveFlock;
@@ -94,10 +88,6 @@ fn main() -> Result<(), std::io::Error> {
 4. LockFile (use try_exclusive_lock)
 
 ```
-
-
-extern crate cluFlock;
-
 use cluFlock::ExclusiveFlock;
 use std::fs::File;
 use std::time::Duration;
@@ -187,7 +177,7 @@ mod r#fn;
 pub (crate) use self::r#fn::*;
 
 
-///Set a shared lock. A shared lock on a given file can hold more than one process.
+/// Initialize general lock. General blocking of a data stream may contain several processes.
 pub trait SharedFlock where Self: FlockElement + FlockUnlock + Sized {	
 	fn try_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
 	fn wait_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
@@ -197,7 +187,7 @@ pub trait SharedFlock where Self: FlockElement + FlockUnlock + Sized {
 }
 
 
-///To establish exclusive blocking. Only one process can hold exclusive blocking of the file.
+/// Set exclusive lock. Only one process can hold a data flow lock.
 pub trait ExclusiveFlock where Self: FlockElement + FlockUnlock + Sized {	
 	fn try_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
 	fn wait_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;

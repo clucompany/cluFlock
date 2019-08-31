@@ -1,4 +1,7 @@
 
+//! Error structures used in cluFlock methods.
+//!
+
 use crate::SafeUnlockFlock;
 use crate::sys::FlockElement;
 use std::ops::Deref;
