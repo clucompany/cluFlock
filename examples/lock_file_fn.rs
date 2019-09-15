@@ -1,5 +1,7 @@
+use std::io;
+
 #[cfg(unix)]
-use std::io::{self, Write};
+use std::io::Write;
 #[cfg(unix)]
 use std::fs::OpenOptions;
 #[cfg(unix)]
@@ -60,3 +62,7 @@ fn main() -> Result<(), io::Error> {
 	Ok( () )
 }
 
+#[cfg(windows)]
+fn main() -> Result<(), io::Error> {
+	unimplemented!()
+}
