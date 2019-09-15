@@ -1,5 +1,8 @@
 language: rust
 cache: cargo
+os: 
+  - linux
+  - windows
 rust:
   - stable
   - beta
