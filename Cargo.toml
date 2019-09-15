@@ -1,13 +1,13 @@
 [package]
 name = "cluFlock"
-version = "1.2.4"
+version = "1.2.5"
 authors = ["Denis Kotlyarov (Денис Котляров) <denis2005991@gmail.com>"]
 repository = "https://github.com/clucompany/cluFlock.git"
 license = " Apache-2.0"
 readme = "README.md"
 edition = "2018"
 
-keywords = ["flock", "unix_flock", "safe_flock", "stream_flock", "clucompany"]
+keywords = ["flock", "unix_flock", "win_flock", "safe_flock", "stream_flock", "clucompany"]
 categories = ["development-tools::ffi"]
 
 description = "Installation and subsequent safe removal of `flock` locks for data streams."
