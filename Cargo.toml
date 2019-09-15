@@ -17,8 +17,10 @@ default = []
 nightly = ["cluFullTransmute"]
 
 [dependencies]
-libc = "0.2.62"
-cluFullTransmute = {version = "1.0.1", optional = true }
+cluFullTransmute = {version = "1.0.2", optional = true }
 
-#[target.'cfg(nightly)'.dependencies]
-#cluFullTransmute = "1.0.1"
+[target.'cfg(unix)'.dependencies]
+libc = "0.2.62"
+
+[target.'cfg(windows)'.dependencies]
+winapi = { version = "0.3.8", features = ["fileapi", "minwinbase", "winnt", "ntdef"] }

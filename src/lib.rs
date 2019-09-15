@@ -143,14 +143,22 @@ mod os_release {
 	#[cfg(unix)]
 	pub mod unix;
 	
+	#[cfg(windows)]
+	pub mod windows;
+	
 	pub mod r#dyn;
 }
 pub (crate) use os_release::r#dyn::*;
+
+pub mod element;
 
 #[doc(hidden)]
 pub (crate) mod sys {
 	#[cfg(unix)]
 	pub use crate::os_release::unix::*;
+	
+	#[cfg(windows)]
+	pub use crate::os_release::windows::*;
 }
 
 mod data {
@@ -165,8 +173,7 @@ mod data {
 }
 pub use self::data::*;
 
-
-use sys::FlockElement;
+use crate::element::FlockElement;
 use crate::err::FlockError;
 use crate::data::err::FlockFnError;
 
@@ -179,7 +186,7 @@ pub (crate) use self::r#fn::*;
 
 
 /// Initialize general lock. General blocking of a data stream may contain several processes.
-pub trait SharedFlock where Self: FlockElement + FlockUnlock + Sized {	
+pub trait SharedFlock where Self: FlockElement + WaitFlockUnlock + Sized {	
 	fn try_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
 	fn wait_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
 	
@@ -189,7 +196,7 @@ pub trait SharedFlock where Self: FlockElement + FlockUnlock + Sized {
 
 
 /// Set exclusive lock. Only one process can hold a data flow lock.
-pub trait ExclusiveFlock where Self: FlockElement + FlockUnlock + Sized {	
+pub trait ExclusiveFlock where Self: FlockElement + WaitFlockUnlock + Sized {	
 	fn try_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
 	fn wait_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
 	

@@ -1,18 +1,19 @@
 
+use crate::data::WaitFlockUnlock;
+use crate::element::FlockElement;
 use crate::BehOsRelease;
 use crate::err::FlockFnError;
 use crate::SafeUnlockFlock;
 use core::marker::PhantomData;
-use crate::sys::FlockElement;
 
-pub (crate) struct FlockFnBuilder<D, F, Fr> where D: FlockElement, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
+pub (crate) struct FlockFnBuilder<D, F, Fr> where D: FlockElement + WaitFlockUnlock, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
 	pub (crate) data: D,
 	pub (crate) function: F,
 	
 	_pp: PhantomData<Fr>,
 }
 
-impl<D, F, Fr> BehOsRelease for FlockFnBuilder<D, F, Fr> where D: FlockElement, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
+impl<D, F, Fr> BehOsRelease for FlockFnBuilder<D, F, Fr> where D: FlockElement + WaitFlockUnlock, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
 	type Ok = Fr;
 	type Err = FlockFnError<D, F, Fr>;
 	type Data = Self;
@@ -28,7 +29,7 @@ impl<D, F, Fr> BehOsRelease for FlockFnBuilder<D, F, Fr> where D: FlockElement, 
 	}
 }
 
-impl<D, F, Fr> FlockFnBuilder<D, F, Fr> where D: FlockElement, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
+impl<D, F, Fr> FlockFnBuilder<D, F, Fr> where D: FlockElement + WaitFlockUnlock, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
 	#[inline]
 	pub (crate) fn new(data: D, function: F) -> Self {
 		Self {

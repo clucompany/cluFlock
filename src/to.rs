@@ -1,11 +1,11 @@
 
 use crate::err::FlockFnError;
 use crate::SafeUnlockFlock;
-use crate::sys::FlockElement;
 use crate::ExclusiveFlock;
 use crate::SharedFlock;
 use crate::FlockLock;
 use crate::err::FlockError;
+use crate::element::FlockElement;
 
 /// Convenient conversion of previously used values ​​to cluFlock.
 pub trait ToFlock where Self: Sized {

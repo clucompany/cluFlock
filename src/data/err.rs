@@ -2,8 +2,9 @@
 //! Error structures used in cluFlock methods.
 //!
 
+use crate::data::unlock::WaitFlockUnlock;
+use crate::element::FlockElement;
 use crate::SafeUnlockFlock;
-use crate::sys::FlockElement;
 use std::ops::Deref;
 use std::io;
 
@@ -62,12 +63,12 @@ impl<T> Deref for FlockError<T> where T: FlockElement {
 
 ///The standard error for FlockFn! methods, from the error you can get a borrowed value.
 #[derive(Debug)]
-pub struct FlockFnError<D, F, Fr> where D: FlockElement, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
+pub struct FlockFnError<D, F, Fr> where D: FlockElement + WaitFlockUnlock, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
 	data: FlockError<D>,
 	function: F,
 }
 
-impl<D, F, Fr> FlockFnError<D, F, Fr> where D: FlockElement, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
+impl<D, F, Fr> FlockFnError<D, F, Fr> where D: FlockElement + WaitFlockUnlock, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
 	#[inline(always)]
 	pub fn new(data: D, function: F, err: io::Error) -> Self {
 		Self::flock_error(FlockError::new(data, err), function)
@@ -118,7 +119,7 @@ impl<D, F, Fr> FlockFnError<D, F, Fr> where D: FlockElement, F: FnOnce(SafeUnloc
 }
 
 
-impl<D, F, Fr> Deref for FlockFnError<D, F, Fr> where D: FlockElement, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
+impl<D, F, Fr> Deref for FlockFnError<D, F, Fr> where D: FlockElement + WaitFlockUnlock, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
 	type Target = io::Error;
 	
 	#[inline(always)]
@@ -127,7 +128,7 @@ impl<D, F, Fr> Deref for FlockFnError<D, F, Fr> where D: FlockElement, F: FnOnce
 	}
 }
 
-impl<D, F, Fr> From<FlockFnError<D, F, Fr>> for io::Error where D: FlockElement, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
+impl<D, F, Fr> From<FlockFnError<D, F, Fr>> for io::Error where D: FlockElement + WaitFlockUnlock, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
 	#[inline(always)]
 	fn from(a: FlockFnError<D, F, Fr>) -> io::Error {
 		a.data.err

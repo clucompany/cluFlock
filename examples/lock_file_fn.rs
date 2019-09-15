@@ -1,9 +1,11 @@
-
-use std::io::Write;
-use std::io;
+#[cfg(unix)]
+use std::io::{self, Write};
+#[cfg(unix)]
 use std::fs::OpenOptions;
+#[cfg(unix)]
 use cluFlock::ExclusiveFlock;
 
+#[cfg(unix)]
 fn main() -> Result<(), io::Error> {
 
 	//Two and more applications consistently write down data in the file.
