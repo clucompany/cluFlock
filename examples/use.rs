@@ -12,6 +12,6 @@ fn main() -> Result<(), io::Error> {
 }
 
 /*
-/usr/bin/flock -w 600 /tmp/1 /bin/bash -c "echo Start; sleep 5; echo End; "
+/usr/bin/flock -w 600 ./1 /bin/bash -c "echo Start; sleep 5; echo End; "
 cargo run --example use
 */

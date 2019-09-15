@@ -31,7 +31,7 @@ use std::fs::File;
 use std::io;
 
 fn main() -> Result<(), io::Error> {
-	let file_lock = File::create("/tmp/1")?.wait_exclusive_lock()?;
+	let file_lock = File::create("./1")?.wait_exclusive_lock()?;
 
 	println!("{:?}", file_lock);
 	drop(file_lock); //<-- unlock file
@@ -49,7 +49,7 @@ use std::fs::File;
 use std::io;
 
 fn main() -> Result<(), io::Error> {
-	File::create("/tmp/1")?.wait_exclusive_lock_fn(|mut file| {
+	File::create("./1")?.wait_exclusive_lock_fn(|mut file| {
 		write!(file,  "Test.")
 	})??;
 
@@ -66,7 +66,7 @@ use cluFlock::ExclusiveFlock;
 use std::fs::File;
 
 fn main() -> Result<(), std::io::Error> {
-	let file = File::create("/tmp/1").unwrap();
+	let file = File::create("./1").unwrap();
 
 	let file_lock = ExclusiveFlock::wait_lock(&file)?;
 	//lock...
@@ -91,7 +91,7 @@ use std::time::Duration;
 use std::io::ErrorKind;
 
 fn main() {
-	let file: File = match File::create("/tmp/ulin.lock") {
+	let file: File = match File::create("./ulin.lock") {
 		Ok(a) => a,
 		Err(e) => panic!("Panic, err create file {:?}", e),
 	};

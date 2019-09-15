@@ -16,7 +16,7 @@ fn main() -> Result<(), io::Error> {
 	println!("[{}] Init...", program_pid);
 	
 
-	let mut file = OpenOptions::new().write(true).append(true).create(true).open("/tmp/async_file")?;
+	let mut file = OpenOptions::new().write(true).append(true).create(true).open("./async_file")?;
 	let mut metadata = file.metadata()?;
 
 	let mut new_len;

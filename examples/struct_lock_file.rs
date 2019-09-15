@@ -48,7 +48,7 @@ impl<'a> Drop for MyLockFile<'a> {
 
 
 pub fn main() -> Result<(), io::Error> {
-	let path = Path::new("/tmp/flock.lock");
+	let path = Path::new("./flock.lock");
 	println!("LockFile {:?}", path);
 	let lock_file = MyLockFile::new(path)?;
 

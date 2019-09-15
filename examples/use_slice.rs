@@ -3,7 +3,7 @@ use cluFlock::ExclusiveFlock;
 use std::fs::File;
 
 fn main() -> Result<(), std::io::Error> {
-	let file = File::create("/tmp/1").unwrap();
+	let file = File::create("./1").unwrap();
 
 	let file_lock = ExclusiveFlock::wait_lock(&file)?;
 	//lock...
