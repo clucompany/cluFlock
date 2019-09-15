@@ -53,7 +53,7 @@ fn unix_two_lock_behavior_onprocess() {
 #[cfg(unix)]
 #[test]
 fn unix_check() {
-	let str_path = "./unix_check";
+	let str_path = "./del_unix_check";
 	let path = AutoRemoveFile(Path::new(str_path));
 	let file = File::create(path.0).unwrap();
 	
@@ -66,7 +66,7 @@ fn unix_check() {
 	}
 	
 	
-	let output = Command::new("flock").arg(str_path).arg("/usr/bin/sleep").arg("4").spawn().expect("Failed to execute command");
+	let output = Command::new("flock").arg(str_path).arg("sleep").arg("4").spawn().expect("Failed to execute command");
 	
 	std::thread::sleep(Duration::from_secs(2));
 	

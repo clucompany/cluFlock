@@ -1,6 +1,8 @@
 
 use std::path::Path;
+#[cfg(windows)]
 use std::fs::File;
+#[cfg(windows)]
 use cluFlock::ExclusiveFlock;
 
 struct AutoRemoveFile<'a>(&'a Path);
