@@ -7,7 +7,7 @@
 [![Documentation](https://docs.rs/cluFlock/badge.svg)](https://docs.rs/cluFlock)
 
 
-Installing and then safely removing `flock` locks for data streams.
+Installation and subsequent safe removal of `flock` locks for data streams.
 
 # Use
 1. Exclusive LockFile
