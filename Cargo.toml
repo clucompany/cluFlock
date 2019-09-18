@@ -7,7 +7,7 @@ license = " Apache-2.0"
 readme = "README.md"
 edition = "2018"
 
-keywords = ["flock", "unix_flock", "win_flock", "safe_flock", "stream_flock", "clucompany"]
+keywords = ["flock", "unix_flock", "win_flock", "stream_flock", "clucompany"]
 categories = ["development-tools::ffi"]
 
 description = "Installation and subsequent safe removal of `flock` locks for data streams."
