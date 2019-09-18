@@ -1,4 +1,5 @@
 
+use crate::element::FlockElement;
 use crate::data::unlock::WaitFlockUnlock;
 use crate::data::err::FlockFnError;
 use crate::SafeUnlockFlock;
@@ -6,11 +7,8 @@ use std::ops::DerefMut;
 use std::ops::Deref;
 use crate::BehOsRelease;
 use crate::err::FlockError;
-use crate::FlockElement;
-use crate::FlockUnlock;
 use crate::ExclusiveFlock;
 use crate::SharedFlock;
-
 
 /// Type for securely creating and securely managing 'flock' locks.
 #[derive(Debug)]
@@ -94,7 +92,7 @@ impl<T> FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	
 	/// Destroy the 'flock' lock, return a good result or error.
 	#[inline(always)]
-	pub fn unlock_no_result(self) where T: FlockUnlock {
+	pub fn unlock_no_result(self) {
 		self.safe_lock_data.unlock_no_result()
 	}
 	
@@ -109,7 +107,7 @@ impl<T> FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	/// Destroy the "flock" lock, return data.
 	#[cfg(feature = "nightly")]
 	#[inline(always)]
-	pub fn data_unlock_no_err_result(self) -> T where T: FlockUnlock {
+	pub fn data_unlock_no_err_result(self) -> T {
 		SafeUnlockFlock::data_unlock_no_err_result(self.safe_lock_data)
 	}
 }

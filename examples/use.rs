@@ -6,8 +6,7 @@ use std::io;
 fn main() -> Result<(), io::Error> {
 	let file_lock = File::create("./file")?.wait_exclusive_lock()?;
 	println!("{:?}", file_lock);
-	drop(file_lock); //<-- unlock fn.
-
+	
 	Ok( () )
 }
 

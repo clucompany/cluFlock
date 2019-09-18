@@ -1,12 +1,13 @@
 # cluFlock
 
 [![Build Status](https://travis-ci.org/clucompany/cluFlock.svg?branch=master)](https://travis-ci.org/clucompany/cluFlock)
+[![Platform](https://img.shields.io/badge/platform-unix%20|%20linux%20|%20windows-blue)](https://github.com/clucompany/cluFlock/tree/master/tests)
 [![Apache licensed](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
 [![crates.io](http://meritbadge.herokuapp.com/cluFlock)](https://crates.io/crates/cluFlock)
 [![Documentation](https://docs.rs/cluFlock/badge.svg)](https://docs.rs/cluFlock)
 
-Installation and subsequent safe removal of `flock` locks for data streams.
 
+Installing and then safely removing `flock` locks for data streams.
 
 # Use
 1. Exclusive LockFile
@@ -18,10 +19,8 @@ use std::io;
 
 fn main() -> Result<(), io::Error> {
 	let file_lock = File::create("./file")?.wait_exclusive_lock()?;
-
 	println!("{:?}", file_lock);
-	drop(file_lock); //<-- unlock file
-
+	
 	Ok( () )
 }
 ```
@@ -38,7 +37,7 @@ fn main() -> Result<(), io::Error> {
 	File::create("./file")?.wait_exclusive_lock_fn(|mut file| {
 		write!(file,  "Test.")
 	})??;
-
+	
 	Ok( () )
 }
 ```
@@ -46,21 +45,18 @@ fn main() -> Result<(), io::Error> {
 3. Exclusive LockFile (&File)
 
 ```rust
-extern crate cluFlock;
-
 use cluFlock::ExclusiveFlock;
 use std::fs::File;
 
 fn main() -> Result<(), std::io::Error> {
-	let file = File::create("./file").unwrap();
-
-	let file_lock = ExclusiveFlock::wait_lock(&file)?;
-	//lock...
-
-	println!("{:?}", file_lock);
+	let file = File::create("./file")?;
 	
-	// let file move! 
-	drop(file_lock);
+	{
+		let file_lock = ExclusiveFlock::wait_lock(&file)?;
+		//lock...
+
+		println!("{:?}", file_lock);
+	}
 
 	file.sync_all()?;
 
@@ -68,60 +64,38 @@ fn main() -> Result<(), std::io::Error> {
 }
 ```
 
-4. LockFile (use try_exclusive_lock)
+4. Shared LockFile (&File)
 
 ```rust
-use cluFlock::ExclusiveFlock;
 use std::fs::File;
-use std::time::Duration;
-use std::io::ErrorKind;
+use cluFlock::SharedFlock;
+use std::io;
 
-fn main() {
-	let file: File = match File::create("./ulin.lock") {
-		Ok(a) => a,
-		Err(e) => panic!("Panic, err create file {:?}", e),
-	};
-
-	println!("Try_Exclusive_Lock, {:?}", file);
-
-	let lock = match ExclusiveFlock::try_lock(&file) {
-		//Success, we blocked the file.
-		Ok(lock) => {
-			println!("OK, File {:?} successfully locked.", file);
-
-			
-			lock
-		},
-		
-		//File already locked.
-		Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
-			println!("ALREADY LOCKED: File {:?}.", file);
-
-			println!("!Exclusive_Lock, {:?}", file);
-			
-			//Lock the current thread to such an extent until your file is unlocked.
-			//&file.wait_exclusive_lock().unwrap()
-			ExclusiveFlock::wait_lock(&file).unwrap()
-		},
-		
-		Err(e) => panic!("Panic, err lock file {:?}", e)
-
-	};
-
-	println!("Sleep, 5s");
-	::std::thread::sleep(Duration::from_secs(5));
-
-	println!("Unlock, {:?}", file);
-	drop(lock);
+fn main() -> Result<(), io::Error> {
+	let file = File::create("./file")?;
+	
+	let shared = SharedFlock::wait_lock(&file);
+	println!("#1shared {:?}", shared);
+	
+	let shared2 = SharedFlock::try_lock(&file)?;
+	println!("#2shared {:?}", shared2);
+	
+	Ok( () )
 }
 ```
+
+# Support of platforms:
+1. Unix, Linux: Full support: SharedFlock (Wait, Try), ExclusiveFlock (Wait, Try), Unlock (Wait, Try).
+1. Windows: Full support: SharedFlock (Wait, Try), ExclusiveFlock (Wait, Try), Unlock (Wait, !Try). Unlock Try is not implemented and is considered additional unsafe functionality.
+
+# Features of platforms:
+1. Unix, Linux: The flock system call only works between processes, there are no locks inside the process.
+2. Windows: System calls (LockFileEx UnlockFileEx) work between processes and within the current process. If you use Shared and Exclusive locks, you can lock yourself in the same process.
 
 # Library flags:
 1. nightly: Allows you to safely transform the lock into the original data, the night version of the compiler and the cluFullTransmute library are required.
 
-
 # License
 
 Copyright 2019 #UlinProject Denis Kotlyarov (Денис Котляров)
-
 Licensed under the Apache License, Version 2.0

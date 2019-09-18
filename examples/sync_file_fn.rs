@@ -1,18 +1,13 @@
 use std::io;
-
-#[cfg(unix)]
 use std::io::Write;
-#[cfg(unix)]
 use std::fs::OpenOptions;
-#[cfg(unix)]
 use cluFlock::ExclusiveFlock;
 
-#[cfg(unix)]
 fn main() -> Result<(), io::Error> {
 
 	//Two and more applications consistently write down data in the file.
 	
-	let program_pid = unsafe{ libc::getpid() };
+	let program_pid = get_pid();
 	println!("[{}] Init...", program_pid);
 	
 
@@ -62,7 +57,13 @@ fn main() -> Result<(), io::Error> {
 	Ok( () )
 }
 
+
+#[cfg(unix)]
+fn get_pid() -> i32 {
+	unsafe{ libc::getpid() }
+}
+
 #[cfg(windows)]
-fn main() -> Result<(), io::Error> {
-	unimplemented!()
+fn get_pid() -> i32 {
+	0
 }

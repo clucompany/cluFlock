@@ -1,10 +1,15 @@
 
+//! FlockElement is required to implement additional Flock locks.
+//!
 
-use crate::data::WaitFlockUnlock;
+use crate::data::unlock::SafeUnlockFlock;
+use crate::data::unlock::WaitFlockUnlock;
 use crate::FlockFnBuilder;
-use crate::data::SafeUnlockFlock;
 
+/// FlockElement is required to implement additional Flock locks.
 pub trait FlockElement {
+	/// Unix: RawFd,
+	/// Win: RawHandle
 	type FilePtr;
 	
 	fn as_file_ptr(&self) -> Self::FilePtr;

@@ -5,7 +5,7 @@ use std::time::Duration;
 use std::io::ErrorKind;
 
 fn main() {
-	let file: File = match File::create("./ulin.lock") {
+	let file: File = match File::create("./sync.file") {
 		Ok(a) => a,
 		Err(e) => panic!("Panic, err create file {:?}", e),
 	};

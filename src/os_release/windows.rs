@@ -1,5 +1,5 @@
 
-use crate::data::WaitFlockUnlock;
+use crate::data::unlock::WaitFlockUnlock;
 use winapi::um::minwinbase::OVERLAPPED;
 use winapi::um::winnt::MAXDWORD;
 use winapi::um::fileapi::LockFileEx;
@@ -9,7 +9,7 @@ use crate::SharedFlock;
 use crate::os_release::r#dyn::BehOsRelease;
 use crate::data::err::FlockFnError;
 use winapi::shared::minwindef::DWORD;
-use crate::data::SafeUnlockFlock;
+use crate::SafeUnlockFlock;
 use crate::data::FlockLock;
 use crate::data::err::FlockError;
 use std::os::windows::io::RawHandle;

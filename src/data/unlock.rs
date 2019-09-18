@@ -89,7 +89,7 @@ pub trait WaitFlockUnlock {
 }
 
 
-/// The structure that controls the 'flock' lock.
+/// The structure controls the castle.
 #[derive(Debug)]
 pub struct SafeUnlockFlock<T> where T: WaitFlockUnlock {
 	data: T,

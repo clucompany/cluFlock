@@ -1,5 +1,5 @@
 
-use crate::data::WaitFlockUnlock;
+use crate::data::unlock::WaitFlockUnlock;
 use crate::element::FlockElement;
 use crate::BehOsRelease;
 use crate::err::FlockFnError;

@@ -1,6 +1,6 @@
 
-use crate::data::WaitFlockUnlock;
-use crate::data::TryFlockUnlock;
+use crate::data::unlock::TryFlockUnlock;
+use crate::data::unlock::WaitFlockUnlock;
 use crate::element::FlockElement;
 use crate::err::FlockFnError;
 use crate::FlockFnBuilder;
@@ -14,7 +14,6 @@ use crate::FlockLock;
 use crate::SharedFlock;
 use std::os::unix::io::RawFd;
 use std::io;
-
 
 impl FlockElement for File {
 	type FilePtr = RawFd;
@@ -102,4 +101,3 @@ fn flock<I: BehOsRelease>(arg: I::Data, flag: libc::c_int) -> Result<I::Ok, I::E
 		_ => Err( I::err(arg, io::Error::last_os_error()) ),
 	}
 }
-
