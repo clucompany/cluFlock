@@ -90,9 +90,7 @@ impl<T> ExclusiveFlock for T where T: FlockElement<FilePtr = RawHandle> {
 }
 
 
-
-#[inline]
-fn flock<I: BehOsRelease>(arg: I::Data, flock_args: DWORD) -> Result<I::Ok, I::Err> where I::Data : FlockElement<FilePtr = RawHandle> {
+fn flock<D: FlockElement<FilePtr = RawFd>, F: FnOnce(D) -> R, FE: FnOnce(D, std::io::Error) -> R, R>(arg: D, flag: DWORD, next: F, errf: FE) -> R {
 	let overlapped: OVERLAPPED = unsafe { std::mem::zeroed() };
 	
 	match unsafe { LockFileEx(arg.as_file_ptr() as _, flock_args, DW_RESERVED, 0, MAXDWORD, (&overlapped) as *const _ as *mut _) } {

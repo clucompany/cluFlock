@@ -7,10 +7,10 @@ fn main() -> Result<(), std::io::Error> {
 	
 	{
 		let file_lock = ExclusiveFlock::wait_lock(&file)?;
-		//lock...
+		// file_lock, type: FlockLock<&File>
 
 		println!("{:?}", file_lock);
-	}
+	} // auto unlock ExclusiveFlock
 
 	file.sync_all()?;
 

@@ -3,7 +3,7 @@
 
 #[cfg(unix)]
 pub mod unix {
-	use std::ops::Deref;
+	use core::ops::Deref;
 	use std::process::ExitStatus;
 	use std::process::Child;
 	use std::ffi::OsStr;

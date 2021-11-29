@@ -1,50 +1,67 @@
 
+use core::fmt::Debug;
+use core::mem::ManuallyDrop;
+use core::hash::Hash;
 use crate::element::FlockElement;
 use crate::data::unlock::WaitFlockUnlock;
-use crate::data::err::FlockFnError;
-use crate::SafeUnlockFlock;
-use std::ops::DerefMut;
-use std::ops::Deref;
-use crate::BehOsRelease;
+use core::ops::DerefMut;
+use core::ops::Deref;
 use crate::err::FlockError;
 use crate::ExclusiveFlock;
 use crate::SharedFlock;
 
 /// Type for securely creating and securely managing 'flock' locks.
-#[derive(Debug)]
+#[derive(/*Copy, */Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[repr(transparent)]
 pub struct FlockLock<T> where T: FlockElement + WaitFlockUnlock {
-	safe_lock_data: SafeUnlockFlock<T>,
+	data: ManuallyDrop<T>,
+}
+
+impl<T> Debug for FlockLock<T> where T: Debug + FlockElement + WaitFlockUnlock {
+	fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+		f.debug_struct("FlockLock")
+			.field("data", &self.data as &T)
+			.finish()
+	}
 }
 
 impl<T> FlockLock<T> where T: FlockElement + WaitFlockUnlock {
+	/// Create lock surveillance structure, unsafe because it 
+	/// is not known if a lock has been created before.
+	#[deprecated]
+	#[inline]
+	pub unsafe fn new(t: T) -> Self {
+		Self::force_new(t)
+	}
 	
 	/// Create lock surveillance structure, unsafe because it 
 	/// is not known if a lock has been created before.
 	#[inline]
-	pub unsafe fn new(t: T) -> Self {
+	pub unsafe fn force_new(data: T) -> Self {
 		Self {
-			safe_lock_data: SafeUnlockFlock::new(t)
+			data: ManuallyDrop::new(data)
 		}
 	}
 	
 	//safe new
 	#[inline(always)]
-	pub fn wait_exclusive_lock(f: T) -> Result<FlockLock<T>, FlockError<T>> where T: ExclusiveFlock {
-		ExclusiveFlock::wait_lock(f)
-	}
-	#[inline(always)]
-	pub fn try_exclusive_lock(f: T) -> Result<FlockLock<T>, FlockError<T>> where T: ExclusiveFlock {
-		ExclusiveFlock::try_lock(f)
+	pub fn wait_exclusive_lock(data: T) -> Result<FlockLock<T>, FlockError<T>> where T: ExclusiveFlock {
+		ExclusiveFlock::wait_lock(data)
 	}
 	
+	#[inline(always)]
+	pub fn try_exclusive_lock(data: T) -> Result<FlockLock<T>, FlockError<T>> where T: ExclusiveFlock {
+		ExclusiveFlock::try_lock(data)
+	}
 	
 	#[inline(always)]
-	pub fn wait_exclusive_lock_fn<Fn: FnOnce(SafeUnlockFlock<T>) -> Fr, Fr>(f: T, function: Fn) -> Result<Fr, FlockFnError<T, Fn, Fr>> where T: ExclusiveFlock {
-		ExclusiveFlock::wait_lock_fn(f, function)
+	pub fn wait_exclusive_lock_fn<F: FnOnce(FlockLock<T>) -> R, FE: FnOnce(FlockError<T>) -> R, R>(data: T, next: F, errf: FE) -> R where T: ExclusiveFlock {
+		ExclusiveFlock::wait_lock_fn(data, next, errf)
 	}
+	
 	#[inline(always)]
-	pub fn try_exclusive_lock_fn<Fn: FnOnce(SafeUnlockFlock<T>) -> Fr, Fr>(f: T, function: Fn) -> Result<Fr, FlockFnError<T, Fn, Fr>> where T: ExclusiveFlock {
-		ExclusiveFlock::try_lock_fn(f, function)
+	pub fn try_exclusive_lock_fn<F: FnOnce(FlockLock<T>) -> R, FE: FnOnce(FlockError<T>) -> R, R>(data: T, next: F, errf: FE) -> R where T: ExclusiveFlock {
+		ExclusiveFlock::try_lock_fn(data, next, errf)
 	}
 
 
@@ -59,107 +76,144 @@ impl<T> FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	}
 	
 	#[inline(always)]
-	pub fn wait_shared_lock_fn<Fn: FnOnce(SafeUnlockFlock<T>) -> Fr, Fr>(f: T, function: Fn) -> Result<Fr, FlockFnError<T, Fn, Fr>> where T: SharedFlock {
-		SharedFlock::wait_lock_fn(f, function)
+	pub fn wait_shared_lock_fn<F: FnOnce(FlockLock<T>) -> R, FE: FnOnce(FlockError<T>) -> R, R>(data: T, next: F, errf: FE) -> R where T: SharedFlock {
+		SharedFlock::wait_lock_fn(data, next, errf)
 	}
 	#[inline(always)]
-	pub fn try_shared_lock_fn<Fn: FnOnce(SafeUnlockFlock<T>) -> Fr, Fr>(f: T, function: Fn) -> Result<Fr, FlockFnError<T, Fn, Fr>> where T: SharedFlock {
-		SharedFlock::try_lock_fn(f, function)
+	pub fn try_shared_lock_fn<F: FnOnce(FlockLock<T>) -> R, FE: FnOnce(FlockError<T>) -> R, R>(data: T, next: F, errf: FE) -> R where T: SharedFlock {
+		SharedFlock::try_lock_fn(data, next, errf)
 	}
 	//
 	
-	#[inline]
-	pub fn new_block_point(&self) -> &Self {
-		&self
+	#[inline(always)]
+	pub fn as_ptr(&self) -> *const T {
+		// exp stable ManuallyDrop::as_ptr
+		&*self.data as _
 	}
 	
 	#[inline(always)]
-	pub fn as_safe_unlock(&self) -> &SafeUnlockFlock<T> {
-		&self.safe_lock_data
-	}
-	
-	/// Exclude the current shell and also return the `flock` lock control controller.
-	#[inline]
-	pub fn to_safe_unlock(self) -> SafeUnlockFlock<T> {
-		self.safe_lock_data
+	pub fn as_mut_ptr(&mut self) -> *mut T {
+		// exp stable ManuallyDrop::as_mut_ptr
+		&mut *self.data as _
 	}
 	
 	/// Destroy the 'flock' lock, return a good result or error.
-	#[inline(always)]
-	pub fn unlock(self) -> Result<T::UnlockResult, std::io::Error> {
-		self.safe_lock_data.unlock()
+	#[inline]
+	pub fn unlock_fn<F: FnOnce() -> R, FE: FnOnce(std::io::Error) -> R, R>(mut self, next: F, errf: FE) -> R {
+		let result = unsafe {
+			WaitFlockUnlock::unlock_fn(&mut *self.data, next, errf)
+		};
+		
+		// always drop
+		unsafe {
+			ManuallyDrop::drop(&mut self.data);
+		}
+		let _ignore_self_drop = ManuallyDrop::new(self);
+		
+		result
 	}
 	
 	/// Destroy the 'flock' lock, return a good result or error.
-	#[inline(always)]
-	pub fn unlock_no_result(self) {
-		self.safe_lock_data.unlock_no_result()
+	#[inline]
+	pub fn unlock(self) -> Result<(), std::io::Error> {
+		self.unlock_fn(
+			|| Ok(()),
+			|e| Err(e)
+		)
 	}
 	
+	/// Destroy the 'flock' lock, return a good result or error.
+	#[inline]
+	pub fn unlock_no_err_result(mut self) {
+		unsafe {
+			WaitFlockUnlock::unlock_no_result(&mut *self.data);
+		}
+		
+		// always drop
+		unsafe {
+			ManuallyDrop::drop(&mut self.data);
+		}
+		let _ignore_self_drop = ManuallyDrop::new(self);
+	}
 	
 	/// Destroy the "flock" lock, return data and error data.
-	#[cfg(feature = "nightly")]
-	#[inline(always)]
-	pub fn data_unlock(self) -> (T, Result<T::UnlockResult, std::io::Error>) {
-		SafeUnlockFlock::data_unlock(self.safe_lock_data)
+	#[inline]
+	pub fn data_unlock(self) -> (T, Result<(), std::io::Error>) {
+		self.data_unlock_fn(
+			|| Ok(()),
+			|e| Err(e)
+		)
 	}
 	
+	/// Destroy the "flock" lock, return data and error data.
+	#[inline]
+	pub fn data_unlock_fn<F: FnOnce() -> R, FE: FnOnce(std::io::Error) -> R, R>(mut self, next: F, errf: FE) -> (T, R) {
+		let result = unsafe {
+			WaitFlockUnlock::unlock_fn(&mut *self.data, next, errf)
+		};
+		
+		//
+		let data = unsafe {
+			ManuallyDrop::take(&mut self.data)
+		};
+		let _ignore_self_drop = ManuallyDrop::new(self);
+		
+		(data, result)
+	}
+	
+	
 	/// Destroy the "flock" lock, return data.
-	#[cfg(feature = "nightly")]
-	#[inline(always)]
-	pub fn data_unlock_no_err_result(self) -> T {
-		SafeUnlockFlock::data_unlock_no_err_result(self.safe_lock_data)
+	#[inline]
+	pub fn data_unlock_no_err_result(mut self) -> T {
+		let _result = unsafe {
+			WaitFlockUnlock::unlock_no_result(&mut *self.data)
+		};
+		
+		//
+		let data = unsafe {
+			ManuallyDrop::take(&mut self.data)
+		};
+		let _ignore_self_drop = ManuallyDrop::new(self);
+		
+		data
 	}
 }
 
 impl<T> AsRef<T> for FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	#[inline(always)]
 	fn as_ref(&self) -> &T {
-		&self.safe_lock_data
-	}
-}
-impl<T> AsMut<T> for FlockLock<T> where T: FlockElement + WaitFlockUnlock {
-	#[inline(always)]
-	fn as_mut(&mut self) -> &mut T {
-		&mut self.safe_lock_data
+		&self.data
 	}
 }
 
+impl<T> AsMut<T> for FlockLock<T> where T: FlockElement + WaitFlockUnlock {
+	#[inline(always)]
+	fn as_mut(&mut self) -> &mut T {
+		&mut self.data
+	}
+}
 
 impl<T> Deref for FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	type Target = T;
 	
 	#[inline(always)]
 	fn deref(&self) -> &Self::Target {
-		self.safe_lock_data.deref()
+		self.data.deref()
 	}
 }
 
 impl<T> DerefMut for FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	#[inline(always)]
 	fn deref_mut(&mut self) -> &mut Self::Target {
-		self.safe_lock_data.deref_mut()
+		self.data.deref_mut()
 	}
 }
 
-impl<T> BehOsRelease for FlockLock<T> where T: FlockElement + WaitFlockUnlock {
-	type Ok = Self;
-	type Err = FlockError<Self::Data>;
-	type Data = T;
-	
+impl<T> Drop for FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	#[inline(always)]
-	fn ok(t: Self::Data) -> Self::Ok {
-		unsafe { Self::Ok::new(t) }
-	}
-	
-	#[inline(always)]
-	fn err(t: Self::Data, err: std::io::Error) -> Self::Err {
-		Self::Err::new(t, err)
+	fn drop(&mut self) {
+		unsafe {
+			self.unlock_no_result();
+		}
 	}
 }
-
-
-
-
-
-

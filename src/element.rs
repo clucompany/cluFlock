@@ -2,10 +2,6 @@
 //! FlockElement is required to implement additional Flock locks.
 //!
 
-use crate::data::unlock::SafeUnlockFlock;
-use crate::data::unlock::WaitFlockUnlock;
-use crate::FlockFnBuilder;
-
 /// FlockElement is required to implement additional Flock locks.
 pub trait FlockElement {
 	/// Unix: RawFd,
@@ -15,17 +11,16 @@ pub trait FlockElement {
 	fn as_file_ptr(&self) -> Self::FilePtr;
 }
 
-
-impl<D, F, Fr> FlockElement for FlockFnBuilder<D, F, Fr> where D: FlockElement + WaitFlockUnlock, F: FnOnce(SafeUnlockFlock<D>) -> Fr {
-	type FilePtr = D::FilePtr;
+impl<'a, 'l, T: 'l> FlockElement for &'a T where T: FlockElement {
+	type FilePtr = T::FilePtr;
 	
 	#[inline(always)]
 	fn as_file_ptr(&self) -> Self::FilePtr {
-		self.data.as_file_ptr()
+		T::as_file_ptr(self)
 	}
 }
 
-impl<'a, 'l, T: 'l> FlockElement for &'a T where T: FlockElement {
+impl<T> FlockElement for Box<T> where T: FlockElement {
 	type FilePtr = T::FilePtr;
 	
 	#[inline(always)]

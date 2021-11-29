@@ -1,11 +1,11 @@
 [package]
 name = "cluFlock"
-version = "1.2.5"
+version = "1.2.6"
 authors = ["Denis Kotlyarov (Денис Котляров) <denis2005991@gmail.com>"]
 repository = "https://github.com/clucompany/cluFlock.git"
 license = " Apache-2.0"
 readme = "README.md"
-edition = "2018"
+edition = "2021"
 
 keywords = ["flock", "unix_flock", "win_flock", "stream_flock", "clucompany"]
 categories = ["development-tools::ffi"]
@@ -14,13 +14,11 @@ description = "Installation and subsequent safe removal of `flock` locks for dat
 
 [features]
 default = []
-nightly = ["cluFullTransmute"]
 
 [dependencies]
-cluFullTransmute = {version = "1.0.2", optional = true }
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.62"
+libc = "0.2.107"
 
 [target.'cfg(windows)'.dependencies]
-winapi = { version = "0.3.8", features = ["fileapi", "minwinbase", "winnt", "ntdef"] }
+winapi = { version = "0.3.9", features = ["fileapi", "minwinbase", "winnt", "ntdef"] }

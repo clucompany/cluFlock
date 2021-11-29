@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 
-//Copyright 2019 #UlinProject Денис Котляров
+//Copyright 2021 #UlinProject Денис Котляров
 
 //Licensed under the Apache License, Version 2.0 (the "License");
 //you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 // limitations under the License.
 
 
-//#Ulin Project 1819
+//#Ulin Project 2021
 //
 
 /*!
@@ -46,11 +46,15 @@ use std::fs::File;
 use std::io;
 
 fn main() -> Result<(), io::Error> {
-	File::create("./file")?.wait_exclusive_lock_fn(|mut file| {
-		write!(file,  "Test.")
-	})??;
+	File::create("./file")?.wait_exclusive_lock_fn(
+		// valid exclusive lock
+		|mut file| write!(file, "Test."), // result: Ok(usize)/Err(std::io::Error)
+		
+		// invalid lock
+		|err| Err(err.into_err()) // into_err: FlockErr -> std::io::Error
+	)?;
 	
-	Ok( () )
+	Ok(())
 }
 ```
 
@@ -65,10 +69,10 @@ fn main() -> Result<(), std::io::Error> {
 	
 	{
 		let file_lock = ExclusiveFlock::wait_lock(&file)?;
-		//lock...
+		// file_lock, type: FlockLock<&File>
 
 		println!("{:?}", file_lock);
-	}
+	} // auto unlock ExclusiveFlock
 
 	file.sync_all()?;
 
@@ -84,13 +88,19 @@ use cluFlock::SharedFlock;
 use std::io;
 
 fn main() -> Result<(), io::Error> {
-	let file = File::create("./file")?;
+	let file = File::create("./test_file")?;
 	
 	let shared = SharedFlock::wait_lock(&file);
 	println!("#1shared {:?}", shared);
-	
-	let shared2 = SharedFlock::try_lock(&file)?;
+	let shared2 = SharedFlock::try_lock(&file);
 	println!("#2shared {:?}", shared2);
+	
+	assert_eq!(shared.is_ok(), true);
+	assert_eq!(shared2.is_ok(), true);
+	
+	// manual or automatic unlock SharedFlock_x2
+	// drop(shared);
+	// drop(shared2);
 	
 	Ok( () )
 }
@@ -104,26 +114,19 @@ fn main() -> Result<(), io::Error> {
 1. Unix, Linux: The flock system call only works between processes, there are no locks inside the process.
 2. Windows: System calls (LockFileEx UnlockFileEx) work between processes and within the current process. If you use Shared and Exclusive locks, you can lock yourself in the same process.
 
-# Library flags:
-1. nightly: Allows you to safely transform the lock into the original data, the night version of the compiler and the cluFullTransmute library are required.
-
 # License
 
-Copyright 2019 #UlinProject Denis Kotlyarov (Денис Котляров)
+Copyright 2021 #UlinProject Denis Kotlyarov (Денис Котляров)
 
 Licensed under the Apache License, Version 2.0
 
-
 */
-
-#![cfg_attr(nightly, feature(nightly))]
 
 use crate::data::err::FlockError;
 use crate::data::unlock::WaitFlockUnlock;
 use crate::element::FlockElement;
-use crate::data::unlock::SafeUnlockFlock;
 
-//os_release
+// os_release
 mod os_release {
 	#[cfg(unix)]
 	pub mod unix;
@@ -133,7 +136,6 @@ mod os_release {
 	
 	pub mod r#dyn;
 }
-pub (crate) use os_release::r#dyn::*;
 
 #[doc(hidden)]
 pub (crate) mod sys {
@@ -150,15 +152,9 @@ mod data {
 	
 	mod lock;
 	pub use self::lock::*;
-	
-	mod r#fn;
-	pub (crate) use self::r#fn::*;
 }
+
 pub use self::data::*;
-
-use crate::data::err::FlockFnError;
-
-
 mod to;
 pub use self::to::*;
 
@@ -166,22 +162,52 @@ pub mod element;
 
 
 /// Set exclusive lock. Only one process can hold a data flow lock.
-pub trait ExclusiveFlock where Self: FlockElement + WaitFlockUnlock + Sized {	
-	fn try_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
-	fn wait_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
+pub trait ExclusiveFlock where Self: FlockElement + WaitFlockUnlock + Sized {
+	#[inline]
+	fn try_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> {
+		ExclusiveFlock::try_lock_fn(
+			self,
+			|sself| Ok(sself), 
+			|e| Err(e)
+		)
+	}
 	
-	fn try_lock_fn<Fn: FnOnce(SafeUnlockFlock<Self>) -> Fr, Fr>(self, f: Fn) -> Result<Fr, FlockFnError<Self, Fn, Fr>>;
-	fn wait_lock_fn<Fn: FnOnce(SafeUnlockFlock<Self>) -> Fr, Fr>(self, f: Fn) -> Result<Fr, FlockFnError<Self, Fn, Fr>>;
+	#[inline]
+	fn wait_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> {
+		ExclusiveFlock::wait_lock_fn(
+			self,
+			|sself| Ok(sself), 
+			|e| Err(e)
+		)
+	}
+	
+	fn try_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R;
+	fn wait_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R;
 }
 
 
 /// Set common lock, common locks can be many. An exclusive lock will wait for all shared locks to complete.
-pub trait SharedFlock where Self: FlockElement + WaitFlockUnlock + Sized {	
-	fn try_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
-	fn wait_lock(self) -> Result<FlockLock<Self>, FlockError<Self>>;
+pub trait SharedFlock where Self: FlockElement + WaitFlockUnlock + Sized {
+	#[inline]
+	fn try_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> {
+		SharedFlock::try_lock_fn(
+			self,
+			|sself| Ok(sself), 
+			|e| Err(e)
+		)
+	}
 	
-	fn try_lock_fn<Fn: FnOnce(SafeUnlockFlock<Self>) -> Fr, Fr>(self, f: Fn) -> Result<Fr, FlockFnError<Self, Fn, Fr>>;
-	fn wait_lock_fn<Fn: FnOnce(SafeUnlockFlock<Self>) -> Fr, Fr>(self, f: Fn) -> Result<Fr, FlockFnError<Self, Fn, Fr>>;
+	#[inline]
+	fn wait_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> {
+		SharedFlock::wait_lock_fn(
+			self,
+			|sself| Ok(sself), 
+			|e| Err(e)
+		)
+	}
+	
+	fn try_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R;
+	fn wait_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R;
 }
 
 

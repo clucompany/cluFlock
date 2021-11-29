@@ -5,7 +5,7 @@ use std::time::Duration;
 use std::io::ErrorKind;
 
 fn main() {
-	let file: File = match File::create("./sync.file") {
+	let file: File = match File::create("./test_file") {
 		Ok(a) => a,
 		Err(e) => panic!("Panic, err create file {:?}", e),
 	};
@@ -17,18 +17,17 @@ fn main() {
 		Ok(lock) => {
 			println!("OK, File {:?} successfully locked.", file);
 
-			
 			lock
 		},
 		
-		//File already locked.
+		// File already locked.
 		Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
 			println!("ALREADY LOCKED: File {:?}.", file);
 
 			println!("!Exclusive_Lock, {:?}", file);
 			
-			//Lock the current thread to such an extent until your file is unlocked.
-			//&file.wait_exclusive_lock().unwrap()
+			// Lock the current thread to such an extent until your file is unlocked.
+			// &file.wait_exclusive_lock().unwrap()
 			ExclusiveFlock::wait_lock(&file).unwrap()
 		},
 		
@@ -37,7 +36,7 @@ fn main() {
 	};
 
 	println!("Sleep, 5s");
-	::std::thread::sleep(Duration::from_secs(5));
+	std::thread::sleep(Duration::from_secs(5));
 
 	println!("Unlock, {:?}", file);
 	drop(lock);

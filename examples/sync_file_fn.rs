@@ -1,13 +1,12 @@
-use std::io;
+
 use std::io::Write;
 use std::fs::OpenOptions;
 use cluFlock::ExclusiveFlock;
 
-fn main() -> Result<(), io::Error> {
-
+fn main() -> Result<(), std::io::Error> {
 	//Two and more applications consistently write down data in the file.
 	
-	let program_pid = get_pid();
+	let program_pid = platform_methods::get_pid();
 	println!("[{}] Init...", program_pid);
 	
 
@@ -16,7 +15,7 @@ fn main() -> Result<(), io::Error> {
 
 	let mut new_len;
 	let mut old_len = metadata.len();
-	'begin: for num in 0..200 {
+	for num in 0..200 {
 		println!("[{}][{}] Wait Mod file, {:?}", program_pid, num, file);
 		while old_len == {new_len = {metadata = file.metadata()?; metadata.len()}; new_len} {
 			#[allow(deprecated)]
@@ -26,30 +25,26 @@ fn main() -> Result<(), io::Error> {
 		println!("[{}][{}] WaitLock file, {:?}", program_pid, num, file);
 
 		
-		let result = ExclusiveFlock::wait_lock_fn(&mut file, |mut file| {
-			println!("[{}][{}] Write file, {:?}", program_pid, num, file);
+		let result = ExclusiveFlock::wait_lock_fn(&mut file, 
+			|mut file| {
+				println!("[{}][{}] Write file, {:?}", program_pid, num, file);
+				
+				if let Err(e) = write!(file, "[{}][{}]{}->{}\n", program_pid, num, old_len, new_len) {
+					return Err(e);
+				}
+				
+				if let Err(e) = file.sync_all() {
+					return Err(e);
+				}
+				
+				metadata = file.metadata()?;
+				new_len = metadata.len();
+				old_len = new_len;
 
-			let result = match write!(file, "[{}][{}]{}->{}\n", program_pid, num, old_len, new_len) {
-				Ok(a) => {
-					file.sync_all()?; 
-
-					Ok(a)
-				},
-				a => a,
-			};
-
-			new_len = {metadata = file.metadata()?; metadata.len()};
-			old_len = new_len;
-
-			result
-		})?;
-
-		//Alternative
-		/*
-			let result = (&mut file).wait_exclusive_lock_fn(|mut file| {
-					write!(file, "123")
-			})?;
-		*/
+				Ok(())
+			},
+			|err| Err(err.into_err())
+		)?;
 
 		println!("{:?}", result);
 	}
@@ -57,13 +52,17 @@ fn main() -> Result<(), io::Error> {
 	Ok( () )
 }
 
+pub mod platform_methods {
+	#[inline(always)]
+	#[cfg(unix)]
+	pub fn get_pid() -> i32 {
+		unsafe { libc::getpid() }
+	}
 
-#[cfg(unix)]
-fn get_pid() -> i32 {
-	unsafe{ libc::getpid() }
+	#[inline(always)]
+	#[cfg(not(unix))]
+	pub fn get_pid() -> i32 {
+		0
+	}
 }
 
-#[cfg(windows)]
-fn get_pid() -> i32 {
-	0
-}

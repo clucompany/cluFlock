@@ -2,7 +2,7 @@
 
 #[cfg(windows)]
 pub mod windows {
-	use std::ops::Deref;
+	use core::ops::Deref;
 	use std::fs::File;
 	use std::path::Path;
 	use cluFlock::ExclusiveFlock;
