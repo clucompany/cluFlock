@@ -133,8 +133,6 @@ mod os_release {
 	
 	#[cfg(windows)]
 	pub mod windows;
-	
-	pub mod r#dyn;
 }
 
 #[doc(hidden)]

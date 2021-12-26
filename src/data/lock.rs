@@ -28,7 +28,7 @@ impl<T> Debug for FlockLock<T> where T: Debug + FlockElement + WaitFlockUnlock {
 impl<T> FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	/// Create lock surveillance structure, unsafe because it 
 	/// is not known if a lock has been created before.
-	#[deprecated]
+	#[deprecated(since="1.2.6", note="please use `force_new` instead")]
 	#[inline]
 	pub unsafe fn new(t: T) -> Self {
 		Self::force_new(t)
