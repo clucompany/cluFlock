@@ -2,7 +2,6 @@
 use cluFlock::ExclusiveFlock;
 use std::fs::File;
 use std::time::Duration;
-use std::io::ErrorKind;
 
 fn main() {
 	let file: File = match File::create("./test_file") {
@@ -11,7 +10,6 @@ fn main() {
 	};
 
 	println!("Try_Exclusive_Lock, {:?}", file);
-
 	let lock = match ExclusiveFlock::try_lock(&file) {
 		//Success, we blocked the file.
 		Ok(lock) => {
@@ -21,7 +19,7 @@ fn main() {
 		},
 		
 		// File already locked.
-		Err(ref e) if e.kind() == ErrorKind::WouldBlock => {
+		Err(ref e) if e.is_already_lock() => {
 			println!("ALREADY LOCKED: File {:?}.", file);
 
 			println!("!Exclusive_Lock, {:?}", file);
@@ -32,7 +30,6 @@ fn main() {
 		},
 		
 		Err(e) => panic!("Panic, err lock file {:?}", e)
-
 	};
 
 	println!("Sleep, 5s");

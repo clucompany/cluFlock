@@ -13,6 +13,7 @@ use std::fs::OpenOptions;
 
 
 #[derive(Debug)]
+#[allow(dead_code)]
 pub struct RuntimeLockFile<'a> {
 	exclusive_flock: FlockLock<File>, 
 	maybe_autoremove_file: Option<AutoRemovePath<'a>>,

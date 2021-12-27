@@ -7,6 +7,7 @@ use core::fmt::Display;
 use std::error::Error;
 use crate::element::FlockElement;
 use core::ops::Deref;
+use std::io::ErrorKind;
 
 /// The standard error for Flock methods, from the error you can get a borrowed value.
 //#[derive(Debug)]
@@ -91,6 +92,17 @@ impl<T> FlockError<T> where T: FlockElement {
 	#[inline(always)]
 	pub fn into(self) -> T {
 		self.into_data()
+	}
+	
+	#[inline(always)]
+	pub fn is_would_block(&self) -> bool {
+		self.err.kind() == ErrorKind::WouldBlock
+	}
+	
+	/// The error occurred due to the presence of a lock.
+	#[inline(always)]
+	pub fn is_already_lock(&self) -> bool {
+		self.is_would_block()
 	}
 	
 	/// Get a link to data.
