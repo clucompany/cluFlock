@@ -1,9 +1,10 @@
 # cluFlock
 
+[![CI](https://github.com/clucompany/cluFlock/actions/workflows/CI.yml/badge.svg?event=push)](https://github.com/clucompany/cluFlock/actions/workflows/CI.yml)
 [![Build Status](https://travis-ci.org/clucompany/cluFlock.svg?branch=master)](https://travis-ci.org/clucompany/cluFlock)
 [![Platform](https://img.shields.io/badge/platform-unix%20|%20linux%20|%20windows-blue)](https://github.com/clucompany/cluFlock/tree/master/tests)
 [![Apache licensed](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](./LICENSE)
-[![crates.io](http://meritbadge.herokuapp.com/cluFlock)](https://crates.io/crates/cluFlock)
+[![crates.io](https://img.shields.io/crates/v/cluFlock)](https://crates.io/crates/cluFlock)
 [![Documentation](https://docs.rs/cluFlock/badge.svg)](https://docs.rs/cluFlock)
 
 
