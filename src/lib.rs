@@ -1,6 +1,6 @@
 #![allow(non_snake_case)]
 
-//Copyright 2021 #UlinProject Денис Котляров
+//Copyright 2022 #UlinProject Денис Котляров
 
 //Licensed under the Apache License, Version 2.0 (the "License");
 //you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 // limitations under the License.
 
 
-//#Ulin Project 2021
+//#Ulin Project 2022
 //
 
 /*!
@@ -116,46 +116,24 @@ fn main() -> Result<(), io::Error> {
 
 # License
 
-Copyright 2021 #UlinProject Denis Kotlyarov (Денис Котляров)
+Copyright 2022 #UlinProject Denis Kotlyarov (Денис Котляров)
 
 Licensed under the Apache License, Version 2.0
 
 */
 
-use crate::data::err::FlockError;
-use crate::data::unlock::WaitFlockUnlock;
+use crate::err::FlockError;
+use crate::unlock::WaitFlockUnlock;
 use crate::element::FlockElement;
 
-// os_release
-mod os_release {
-	#[cfg(unix)]
-	pub mod unix;
-	
-	#[cfg(windows)]
-	pub mod windows;
-}
+#[cfg_attr(unix,	path = "./sys/unix.rs")]
+#[cfg_attr(windows,	path = "./sys/windows.rs")]
+mod sys;
 
-#[doc(hidden)]
-pub (crate) mod sys {
-	#[cfg(unix)]
-	pub use crate::os_release::unix::*;
-	
-	#[cfg(windows)]
-	pub use crate::os_release::windows::*;
-}
-
-mod data {
-	pub mod err;
-	pub mod unlock;
-	
-	mod lock;
-	pub use self::lock::*;
-}
-
-pub use self::data::*;
-mod to;
-pub use self::to::*;
-
+pub mod err;
+pub mod unlock;
+mod lock;
+pub use crate::lock::*;
 pub mod element;
 
 
@@ -208,4 +186,63 @@ pub trait SharedFlock where Self: FlockElement + WaitFlockUnlock + Sized {
 	fn wait_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R;
 }
 
+/// Convenient conversion of previously used values ​​to cluFlock.
+pub trait ToFlock {
+	fn wait_exclusive_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> where Self: ExclusiveFlock;
+	fn wait_exclusive_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: ExclusiveFlock;
 
+	fn try_exclusive_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> where Self: ExclusiveFlock;
+	fn try_exclusive_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: ExclusiveFlock;
+	
+	
+	fn wait_shared_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> where Self: SharedFlock;
+	fn wait_shared_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: SharedFlock;
+
+	fn try_shared_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> where Self: SharedFlock;
+	fn try_shared_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: SharedFlock;
+}
+
+impl<T> ToFlock for T where T: FlockElement {
+	#[inline(always)]
+	fn wait_exclusive_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> where Self: ExclusiveFlock {
+		ExclusiveFlock::wait_lock(self)
+	}
+	
+	#[inline(always)]
+	fn wait_exclusive_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: ExclusiveFlock {
+		ExclusiveFlock::wait_lock_fn(self, next, errf)
+	}
+	
+
+	#[inline(always)]
+	fn try_exclusive_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> where Self: ExclusiveFlock {
+		ExclusiveFlock::try_lock(self)
+	}
+
+	
+	#[inline(always)]
+	fn try_exclusive_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: ExclusiveFlock {
+		ExclusiveFlock::try_lock_fn(self, next, errf)
+	}
+	
+	#[inline(always)]
+	fn wait_shared_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> where Self: SharedFlock {
+		SharedFlock::wait_lock(self)
+	}
+	
+	#[inline(always)]
+	fn wait_shared_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: SharedFlock {
+		SharedFlock::wait_lock_fn(self, next, errf)
+	}
+
+	#[inline(always)]
+	fn try_shared_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> where Self: SharedFlock {
+		SharedFlock::try_lock(self)
+	}
+
+	#[inline(always)]
+	fn try_shared_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: SharedFlock {
+		SharedFlock::try_lock_fn(self, next, errf)
+	}
+	
+}

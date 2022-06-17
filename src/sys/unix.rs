@@ -1,6 +1,6 @@
 
-use crate::data::unlock::TryFlockUnlock;
-use crate::data::unlock::WaitFlockUnlock;
+use crate::unlock::TryFlockUnlock;
+use crate::unlock::WaitFlockUnlock;
 use crate::element::FlockElement;
 use crate::err::FlockError;
 use std::fs::File;

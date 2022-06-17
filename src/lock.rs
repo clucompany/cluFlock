@@ -1,9 +1,9 @@
 
 use core::fmt::Debug;
-use core::mem::ManuallyDrop;
+use SafeManuallyDrop::ManuallyDrop;
 use core::hash::Hash;
 use crate::element::FlockElement;
-use crate::data::unlock::WaitFlockUnlock;
+use crate::unlock::WaitFlockUnlock;
 use core::ops::DerefMut;
 use core::ops::Deref;
 use crate::err::FlockError;
@@ -86,6 +86,16 @@ impl<T> FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	//
 	
 	#[inline(always)]
+	pub /*const*/ fn as_data(&self) -> &T {
+		&self.data
+	}
+	
+	#[inline(always)]
+	pub fn as_mut_data(&mut self) -> &mut T {
+		&mut self.data
+	}
+	
+	#[inline(always)]
 	pub fn as_ptr(&self) -> *const T {
 		// exp stable ManuallyDrop::as_ptr
 		&*self.data as _
@@ -105,10 +115,8 @@ impl<T> FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 		};
 		
 		// always drop
-		unsafe {
-			ManuallyDrop::drop(&mut self.data);
-		}
-		let _ignore_self_drop = ManuallyDrop::new(self);
+		ManuallyDrop::drop(&mut self.data);
+		ManuallyDrop::forget(self);
 		
 		result
 	}
@@ -126,14 +134,12 @@ impl<T> FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	#[inline]
 	pub fn unlock_no_err_result(mut self) {
 		unsafe {
-			WaitFlockUnlock::unlock_no_result(&mut *self.data);
+			WaitFlockUnlock::unlock_no_result(self.as_mut_data());
 		}
 		
 		// always drop
-		unsafe {
-			ManuallyDrop::drop(&mut self.data);
-		}
-		let _ignore_self_drop = ManuallyDrop::new(self);
+		ManuallyDrop::drop(&mut self.data);
+		ManuallyDrop::forget(self);
 	}
 	
 	/// Destroy the "flock" lock, return data and error data.
@@ -153,10 +159,8 @@ impl<T> FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 		};
 		
 		//
-		let data = unsafe {
-			ManuallyDrop::take(&mut self.data)
-		};
-		let _ignore_self_drop = ManuallyDrop::new(self);
+		let data = ManuallyDrop::take(&mut self.data);
+		ManuallyDrop::forget(self);
 		
 		(data, result)
 	}
@@ -166,14 +170,12 @@ impl<T> FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	#[inline]
 	pub fn data_unlock_no_err_result(mut self) -> T {
 		let _result = unsafe {
-			WaitFlockUnlock::unlock_no_result(&mut *self.data)
+			WaitFlockUnlock::unlock_no_result(self.as_mut_data())
 		};
 		
 		//
-		let data = unsafe {
-			ManuallyDrop::take(&mut self.data)
-		};
-		let _ignore_self_drop = ManuallyDrop::new(self);
+		let data = ManuallyDrop::take(&mut self.data);
+		ManuallyDrop::forget(self);
 		
 		data
 	}
@@ -198,14 +200,14 @@ impl<T> Deref for FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	
 	#[inline(always)]
 	fn deref(&self) -> &Self::Target {
-		self.data.deref()
+		self.as_data()
 	}
 }
 
 impl<T> DerefMut for FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	#[inline(always)]
 	fn deref_mut(&mut self) -> &mut Self::Target {
-		self.data.deref_mut()
+		self.as_mut_data()
 	}
 }
 
@@ -213,7 +215,10 @@ impl<T> Drop for FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	#[inline(always)]
 	fn drop(&mut self) {
 		unsafe {
-			self.unlock_no_result();
+			WaitFlockUnlock::unlock_no_result(self.as_mut_data());
 		}
+		
+		// always drop
+		ManuallyDrop::drop(&mut self.data);
 	}
 }

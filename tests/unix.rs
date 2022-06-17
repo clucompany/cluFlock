@@ -3,6 +3,8 @@
 
 #[cfg(unix)]
 pub mod unix {
+	use std::ffi::OsString;
+	use std::borrow::Cow;
 	use core::ops::Deref;
 	use std::process::ExitStatus;
 	use std::process::Child;
@@ -46,7 +48,7 @@ pub mod unix {
 	struct FlockProcess(Child);
 
 	impl FlockProcess {
-		pub fn new<A>(path: &Path, ttype: &str, args: &[A]) -> FlockProcess where A: AsRef<OsStr> {
+		pub fn new(path: &Path, ttype: &str, args: &[impl AsRef<OsStr>]) -> FlockProcess {
 			let mut output = Command::new("flock");
 			output.arg(ttype).arg("-w").arg("600").arg(path);
 			for arg in args.into_iter() {
@@ -59,11 +61,11 @@ pub mod unix {
 		}
 		
 		pub fn sleep_exclusive(path: &Path, i: usize) -> Self {
-			Self::new(path, "-x", &["sleep".to_string(), i.to_string()])
+			Self::new(path, "-x", &[OsStr::new("sleep").into(), OsString::from(i.to_string()).into()] as &[Cow<'static, OsStr>])
 		}
 		#[allow(dead_code)]
 		pub fn sleep_shared(path: &Path, i: usize) -> Self {
-			Self::new(path, "-s", &["sleep".to_string(), i.to_string()])
+			Self::new(path, "-s", &[OsStr::new("sleep").into(), OsString::from(i.to_string()).into()] as &[Cow<'static, OsStr>])
 		}
 		
 		#[inline(always)]

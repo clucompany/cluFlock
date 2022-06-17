@@ -2,7 +2,7 @@
 use winapi::um::minwinbase::LPOVERLAPPED;
 use winapi::shared::minwindef::BOOL;
 use winapi::um::winnt::HANDLE;
-use crate::data::unlock::WaitFlockUnlock;
+use crate::unlock::WaitFlockUnlock;
 use winapi::um::minwinbase::OVERLAPPED;
 use winapi::um::winnt::MAXDWORD;
 use winapi::um::fileapi::LockFileEx;
@@ -11,7 +11,7 @@ use crate::ExclusiveFlock;
 use crate::SharedFlock;
 use winapi::shared::minwindef::DWORD;
 use crate::data::FlockLock;
-use crate::data::err::FlockError;
+use crate::err::FlockError;
 use std::fs::File;
 use crate::element::FlockElement;
 use std::os::windows::io::AsRawHandle;

@@ -1,6 +1,6 @@
 [package]
 name = "cluFlock"
-version = "1.2.7"
+version = "1.2.8"
 authors = ["Denis Kotlyarov (Денис Котляров) <denis2005991@gmail.com>"]
 repository = "https://github.com/clucompany/cluFlock.git"
 license = " Apache-2.0"
@@ -17,9 +17,11 @@ default = ["win_fix_woudblock_in_errresult"]
 win_fix_woudblock_in_errresult = []
 
 [dependencies]
+#exp version = "1.0.1"
+SafeManuallyDrop = { git = "https://github.com/clucompany/SafeManuallyDrop", default-features = false, features = ["always_check_in_case_debug_assertions", "support_panic_trig", "always_deftrig_panic"] }
 
 [target.'cfg(unix)'.dependencies]
-libc = "0.2.107"
+libc = "0.2.126"
 
 [target.'cfg(windows)'.dependencies]
 winapi = { version = "0.3.9", features = ["fileapi", "minwinbase", "winnt", "ntdef"] }

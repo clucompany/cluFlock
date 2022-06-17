@@ -8,12 +8,13 @@ use std::error::Error;
 use crate::element::FlockElement;
 use core::ops::Deref;
 use std::io::ErrorKind;
+use std::io::Error as IoError;
 
 /// The standard error for Flock methods, from the error you can get a borrowed value.
 //#[derive(Debug)]
 pub struct FlockError<T> where T: FlockElement {
 	data: T,
-	err: std::io::Error,
+	err: IoError,
 }
 
 impl<T> Error for FlockError<T> where T: FlockElement {
@@ -62,16 +63,16 @@ impl<T> Debug for FlockError<T> where T: FlockElement {
 	}
 }
 
-impl<T> From<(T, std::io::Error)> for FlockError<T> where T: FlockElement {
+impl<T> From<(T, IoError)> for FlockError<T> where T: FlockElement {
 	#[inline(always)]
-	fn from((data, err): (T, std::io::Error)) -> Self {
+	fn from((data, err): (T, IoError)) -> Self {
 		Self::new(data, err)
 	}
 }
 
 impl<T> FlockError<T> where T: FlockElement {
 	#[inline]
-	pub fn new(a: T, err: std::io::Error) -> Self {
+	pub fn new(a: T, err: IoError) -> Self {
 		Self {
 			data: a,
 			err: err,
@@ -113,7 +114,7 @@ impl<T> FlockError<T> where T: FlockElement {
 	
 	/// Get a link to err.
 	#[inline(always)]
-	pub fn as_err(&self) -> &std::io::Error {
+	pub fn as_err(&self) -> &IoError {
 		&self.err
 	}
 	
@@ -125,40 +126,26 @@ impl<T> FlockError<T> where T: FlockElement {
 	
 	/// Get all data from the error structure.
 	#[inline(always)]
-	pub fn into_all(self) -> (T, std::io::Error) {
+	pub fn into_all(self) -> (T, IoError) {
 		(self.data, self.err)
 	}
 	
 	/// Get only the error from the error structure.
 	#[inline(always)]
-	pub fn into_err(self) -> std::io::Error {
+	pub fn into_err(self) -> IoError {
 		self.err
-	}
-	
-	/// Get only the error from the error structure.
-	#[inline(always)]
-	#[deprecated(since="1.2.6", note="please use `into_err` instead")]
-	pub fn err(self) -> std::io::Error {
-		self.into_err()
-	}
-	
-	/// Get all data from the error structure.
-	#[inline(always)]
-	#[deprecated(since="1.2.6", note="please use `into_all` instead")]
-	pub fn all(self) -> (T, std::io::Error) {
-		self.into_all()
 	}
 }
 
-impl<T> From<FlockError<T>> for std::io::Error where T: FlockElement {
+impl<T> From<FlockError<T>> for IoError where T: FlockElement {
 	#[inline(always)]
-	fn from(a: FlockError<T>) -> std::io::Error {
+	fn from(a: FlockError<T>) -> IoError {
 		a.err
 	}
 }
 
 impl<T> Deref for FlockError<T> where T: FlockElement {
-	type Target = std::io::Error;
+	type Target = IoError;
 	
 	#[inline(always)]
 	fn deref(&self) -> &Self::Target {
