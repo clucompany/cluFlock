@@ -10,7 +10,7 @@ use winapi::um::fileapi::UnlockFileEx;
 use crate::ExclusiveFlock;
 use crate::SharedFlock;
 use winapi::shared::minwindef::DWORD;
-use crate::data::FlockLock;
+use crate::FlockLock;
 use crate::err::FlockError;
 use std::fs::File;
 use crate::element::FlockElement;

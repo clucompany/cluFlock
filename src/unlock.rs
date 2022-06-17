@@ -1,4 +1,6 @@
 
+use std::io::Error;
+
 pub trait FlockUnlock {
 	// Try
 	//
@@ -6,10 +8,10 @@ pub trait FlockUnlock {
 	unsafe fn try_unlock_no_result(&mut self);
 	
 	/// Destroy 'flock' lock, also check errors.
-	unsafe fn try_unlock(&mut self) -> Result<(), std::io::Error>;
+	unsafe fn try_unlock(&mut self) -> Result<(), Error>;
 	
 	/// Destroy 'flock' lock, also check errors.
-	unsafe fn try_unlock_fn<F: FnOnce() -> R, FE: FnOnce(std::io::Error) -> R, R>(&mut self, next: F, errf: FE) -> R;
+	unsafe fn try_unlock_fn<F: FnOnce() -> R, FE: FnOnce(Error) -> R, R>(&mut self, next: F, errf: FE) -> R;
 	
 	// Wait
 	//
@@ -17,10 +19,10 @@ pub trait FlockUnlock {
 	unsafe fn wait_unlock_no_result(&mut self);
 	
 	/// Destroy 'flock' lock, also check errors.
-	unsafe fn wait_unlock(&mut self) -> Result<(), std::io::Error>;
+	unsafe fn wait_unlock(&mut self) -> Result<(), Error>;
 	
 	/// Destroy 'flock' lock, also check errors.
-	unsafe fn wait_unlock_fn<F: FnOnce() -> R, FE: FnOnce(std::io::Error) -> R, R>(&mut self, next: F, errf: FE) -> R;
+	unsafe fn wait_unlock_fn<F: FnOnce() -> R, FE: FnOnce(Error) -> R, R>(&mut self, next: F, errf: FE) -> R;
 
 	
 	// Why initially unsafe?
@@ -37,28 +39,28 @@ impl<T> FlockUnlock for T where T: WaitFlockUnlock + TryFlockUnlock {
 	}
 
 	#[inline(always)]
-	unsafe fn try_unlock(&mut self) -> Result<(), std::io::Error> {
-		TryFlockUnlock::unlock(self)	
+	unsafe fn try_unlock(&mut self) -> Result<(), Error> {
+		TryFlockUnlock::unlock(self)
 	}
 	
 	#[inline(always)]
-	unsafe fn try_unlock_fn<F: FnOnce() -> R, FE: FnOnce(std::io::Error) -> R, R>(&mut self, next: F, errf: FE) -> R {
+	unsafe fn try_unlock_fn<F: FnOnce() -> R, FE: FnOnce(Error) -> R, R>(&mut self, next: F, errf: FE) -> R {
 		TryFlockUnlock::unlock_fn(self, next, errf)
 	}
 	
 	
 	#[inline(always)]
 	unsafe fn wait_unlock_no_result(&mut self) {
-		WaitFlockUnlock::unlock_no_result(self)	
+		WaitFlockUnlock::unlock_no_result(self)
 	}
 	
 	#[inline(always)]
-	unsafe fn wait_unlock(&mut self) -> Result<(), std::io::Error> {
+	unsafe fn wait_unlock(&mut self) -> Result<(),Error> {
 		WaitFlockUnlock::unlock(self)	
 	}
 	
 	#[inline(always)]
-	unsafe fn wait_unlock_fn<F: FnOnce() -> R, FE: FnOnce(std::io::Error) -> R, R>(&mut self, next: F, errf: FE) -> R {
+	unsafe fn wait_unlock_fn<F: FnOnce() -> R, FE: FnOnce(Error) -> R, R>(&mut self, next: F, errf: FE) -> R {
 		WaitFlockUnlock::unlock_fn(self, next, errf)
 	}
 }
@@ -70,8 +72,8 @@ pub trait TryFlockUnlock {
 	unsafe fn unlock_no_result(&mut self);
 	
 	/// Destroy 'flock' lock, also check errors.
-	#[inline(always)]
-	unsafe fn unlock(&mut self) -> Result<(), std::io::Error> {
+	#[inline]
+	unsafe fn unlock(&mut self) -> Result<(), Error> {
 		TryFlockUnlock::unlock_fn(
 			self,
 			|| Ok(()),
@@ -79,7 +81,7 @@ pub trait TryFlockUnlock {
 		)
 	}
 	
-	unsafe fn unlock_fn<F: FnOnce() -> R, FE: FnOnce(std::io::Error) -> R, R>(&mut self, next: F, errf: FE) -> R;
+	unsafe fn unlock_fn<F: FnOnce() -> R, FE: FnOnce(Error) -> R, R>(&mut self, next: F, errf: FE) -> R;
 	
 	// Why initially unsafe?
 	// 
@@ -94,8 +96,8 @@ pub trait WaitFlockUnlock {
 	unsafe fn unlock_no_result(&mut self);
 	
 	/// Destroy 'flock' lock, also check errors.
-	#[inline(always)]
-	unsafe fn unlock(&mut self) -> Result<(), std::io::Error> {
+	#[inline]
+	unsafe fn unlock(&mut self) -> Result<(), Error> {
 		WaitFlockUnlock::unlock_fn(
 			self,
 			|| Ok(()),
