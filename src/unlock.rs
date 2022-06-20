@@ -11,7 +11,7 @@ pub trait FlockUnlock {
 	unsafe fn try_unlock(&mut self) -> Result<(), Error>;
 	
 	/// Destroy 'flock' lock, also check errors.
-	unsafe fn try_unlock_fn<F: FnOnce() -> R, FE: FnOnce(Error) -> R, R>(&mut self, next: F, errf: FE) -> R;
+	unsafe fn try_unlock_fn<R>(&mut self, next: impl FnOnce() -> R, errf: impl FnOnce(Error) -> R) -> R;
 	
 	// Wait
 	//
@@ -22,7 +22,7 @@ pub trait FlockUnlock {
 	unsafe fn wait_unlock(&mut self) -> Result<(), Error>;
 	
 	/// Destroy 'flock' lock, also check errors.
-	unsafe fn wait_unlock_fn<F: FnOnce() -> R, FE: FnOnce(Error) -> R, R>(&mut self, next: F, errf: FE) -> R;
+	unsafe fn wait_unlock_fn<R>(&mut self, next: impl FnOnce() -> R, errf: impl FnOnce(Error) -> R) -> R;
 
 	
 	// Why initially unsafe?
@@ -44,7 +44,7 @@ impl<T> FlockUnlock for T where T: WaitFlockUnlock + TryFlockUnlock {
 	}
 	
 	#[inline(always)]
-	unsafe fn try_unlock_fn<F: FnOnce() -> R, FE: FnOnce(Error) -> R, R>(&mut self, next: F, errf: FE) -> R {
+	unsafe fn try_unlock_fn<R>(&mut self, next: impl FnOnce() -> R, errf: impl FnOnce(Error) -> R) -> R {
 		TryFlockUnlock::unlock_fn(self, next, errf)
 	}
 	
@@ -60,7 +60,7 @@ impl<T> FlockUnlock for T where T: WaitFlockUnlock + TryFlockUnlock {
 	}
 	
 	#[inline(always)]
-	unsafe fn wait_unlock_fn<F: FnOnce() -> R, FE: FnOnce(Error) -> R, R>(&mut self, next: F, errf: FE) -> R {
+	unsafe fn wait_unlock_fn<R>(&mut self, next: impl FnOnce() -> R, errf: impl FnOnce(Error) -> R) -> R {
 		WaitFlockUnlock::unlock_fn(self, next, errf)
 	}
 }
@@ -81,7 +81,7 @@ pub trait TryFlockUnlock {
 		)
 	}
 	
-	unsafe fn unlock_fn<F: FnOnce() -> R, FE: FnOnce(Error) -> R, R>(&mut self, next: F, errf: FE) -> R;
+	unsafe fn unlock_fn<R>(&mut self, next: impl FnOnce() -> R, errf: impl FnOnce(Error) -> R) -> R;
 	
 	// Why initially unsafe?
 	// 
@@ -106,7 +106,7 @@ pub trait WaitFlockUnlock {
 	}
 	
 	/// Destroy 'flock' lock, also check errors.
-	unsafe fn unlock_fn<F: FnOnce() -> R, FE: FnOnce(std::io::Error) -> R, R>(&mut self, next: F, errf: FE) -> R;
+	unsafe fn unlock_fn<R>(&mut self, next: impl FnOnce() -> R, errf: impl FnOnce(Error) -> R) -> R;
 	
 	// Why initially unsafe?
 	// 

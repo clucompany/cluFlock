@@ -13,8 +13,9 @@ categories = ["development-tools::ffi"]
 description = "Installation and subsequent safe removal of `flock` locks for data streams."
 
 [features]
-default = ["win_fix_woudblock_in_errresult"]
+default = ["win_fix_woudblock_in_errresult", "always_check_ranges"]
 win_fix_woudblock_in_errresult = []
+always_check_ranges = []
 
 [dependencies]
 #exp version = "1.0.1"

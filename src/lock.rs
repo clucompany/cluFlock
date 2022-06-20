@@ -28,14 +28,6 @@ impl<T> Debug for FlockLock<T> where T: Debug + FlockElement + WaitFlockUnlock {
 impl<T> FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	/// Create lock surveillance structure, unsafe because it 
 	/// is not known if a lock has been created before.
-	#[deprecated(since="1.2.6", note="please use `force_new` instead")]
-	#[inline]
-	pub unsafe fn new(t: T) -> Self {
-		Self::force_new(t)
-	}
-	
-	/// Create lock surveillance structure, unsafe because it 
-	/// is not known if a lock has been created before.
 	#[inline]
 	pub unsafe fn force_new(data: T) -> Self {
 		Self {
@@ -55,16 +47,15 @@ impl<T> FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	}
 	
 	#[inline(always)]
-	pub fn wait_exclusive_lock_fn<F: FnOnce(FlockLock<T>) -> R, FE: FnOnce(FlockError<T>) -> R, R>(data: T, next: F, errf: FE) -> R where T: ExclusiveFlock {
+	pub fn wait_exclusive_lock_fn<R>(data: T, next: impl FnOnce(FlockLock<T>) -> R, errf: impl FnOnce(FlockError<T>) -> R) -> R where T: ExclusiveFlock {
 		ExclusiveFlock::wait_lock_fn(data, next, errf)
 	}
 	
 	#[inline(always)]
-	pub fn try_exclusive_lock_fn<F: FnOnce(FlockLock<T>) -> R, FE: FnOnce(FlockError<T>) -> R, R>(data: T, next: F, errf: FE) -> R where T: ExclusiveFlock {
+	pub fn try_exclusive_lock_fn<R>(data: T, next: impl FnOnce(FlockLock<T>) -> R, errf: impl FnOnce(FlockError<T>) -> R) -> R where T: ExclusiveFlock {
 		ExclusiveFlock::try_lock_fn(data, next, errf)
 	}
-
-
+	
 	#[inline(always)]
 	pub fn wait_shared_lock(f: T) -> Result<FlockLock<T>, FlockError<T>> where T: SharedFlock {
 		SharedFlock::wait_lock(f)
@@ -76,11 +67,11 @@ impl<T> FlockLock<T> where T: FlockElement + WaitFlockUnlock {
 	}
 	
 	#[inline(always)]
-	pub fn wait_shared_lock_fn<F: FnOnce(FlockLock<T>) -> R, FE: FnOnce(FlockError<T>) -> R, R>(data: T, next: F, errf: FE) -> R where T: SharedFlock {
+	pub fn wait_shared_lock_fn<R>(data: T, next: impl FnOnce(FlockLock<T>) -> R, errf: impl FnOnce(FlockError<T>) -> R) -> R where T: SharedFlock {
 		SharedFlock::wait_lock_fn(data, next, errf)
 	}
 	#[inline(always)]
-	pub fn try_shared_lock_fn<F: FnOnce(FlockLock<T>) -> R, FE: FnOnce(FlockError<T>) -> R, R>(data: T, next: F, errf: FE) -> R where T: SharedFlock {
+	pub fn try_shared_lock_fn<R>(data: T, next: impl FnOnce(FlockLock<T>) -> R, errf: impl FnOnce(FlockError<T>) -> R) -> R where T: SharedFlock {
 		SharedFlock::try_lock_fn(data, next, errf)
 	}
 	//

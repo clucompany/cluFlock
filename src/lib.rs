@@ -136,6 +136,8 @@ mod lock;
 pub use crate::lock::*;
 pub mod element;
 
+#[cfg(windows)]
+pub mod range;
 
 /// Set exclusive lock. Only one process can hold a data flow lock.
 pub trait ExclusiveFlock where Self: FlockElement + WaitFlockUnlock + Sized {
@@ -157,8 +159,8 @@ pub trait ExclusiveFlock where Self: FlockElement + WaitFlockUnlock + Sized {
 		)
 	}
 	
-	fn try_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R;
-	fn wait_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R;
+	fn try_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R;
+	fn wait_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R;
 }
 
 
@@ -166,8 +168,7 @@ pub trait ExclusiveFlock where Self: FlockElement + WaitFlockUnlock + Sized {
 pub trait SharedFlock where Self: FlockElement + WaitFlockUnlock + Sized {
 	#[inline]
 	fn try_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> {
-		SharedFlock::try_lock_fn(
-			self,
+		self.try_lock_fn(
 			|sself| Ok(sself), 
 			|e| Err(e)
 		)
@@ -175,31 +176,30 @@ pub trait SharedFlock where Self: FlockElement + WaitFlockUnlock + Sized {
 	
 	#[inline]
 	fn wait_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> {
-		SharedFlock::wait_lock_fn(
-			self,
+		self.wait_lock_fn(
 			|sself| Ok(sself), 
 			|e| Err(e)
 		)
 	}
 	
-	fn try_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R;
-	fn wait_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R;
+	fn try_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R;
+	fn wait_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R;
 }
 
 /// Convenient conversion of previously used values ​​to cluFlock.
 pub trait ToFlock {
 	fn wait_exclusive_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> where Self: ExclusiveFlock;
-	fn wait_exclusive_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: ExclusiveFlock;
+	fn wait_exclusive_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R where Self: ExclusiveFlock;
 
 	fn try_exclusive_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> where Self: ExclusiveFlock;
-	fn try_exclusive_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: ExclusiveFlock;
+	fn try_exclusive_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R where Self: ExclusiveFlock;
 	
 	
 	fn wait_shared_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> where Self: SharedFlock;
-	fn wait_shared_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: SharedFlock;
+	fn wait_shared_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R where Self: SharedFlock;
 
 	fn try_shared_lock(self) -> Result<FlockLock<Self>, FlockError<Self>> where Self: SharedFlock;
-	fn try_shared_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: SharedFlock;
+	fn try_shared_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R where Self: SharedFlock;
 }
 
 impl<T> ToFlock for T where T: FlockElement {
@@ -209,7 +209,7 @@ impl<T> ToFlock for T where T: FlockElement {
 	}
 	
 	#[inline(always)]
-	fn wait_exclusive_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: ExclusiveFlock {
+	fn wait_exclusive_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R where Self: ExclusiveFlock {
 		ExclusiveFlock::wait_lock_fn(self, next, errf)
 	}
 	
@@ -221,7 +221,7 @@ impl<T> ToFlock for T where T: FlockElement {
 
 	
 	#[inline(always)]
-	fn try_exclusive_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: ExclusiveFlock {
+	fn try_exclusive_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R where Self: ExclusiveFlock {
 		ExclusiveFlock::try_lock_fn(self, next, errf)
 	}
 	
@@ -231,7 +231,7 @@ impl<T> ToFlock for T where T: FlockElement {
 	}
 	
 	#[inline(always)]
-	fn wait_shared_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: SharedFlock {
+	fn wait_shared_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R where Self: SharedFlock {
 		SharedFlock::wait_lock_fn(self, next, errf)
 	}
 
@@ -241,7 +241,7 @@ impl<T> ToFlock for T where T: FlockElement {
 	}
 
 	#[inline(always)]
-	fn try_shared_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R where Self: SharedFlock {
+	fn try_shared_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R where Self: SharedFlock {
 		SharedFlock::try_lock_fn(self, next, errf)
 	}
 	

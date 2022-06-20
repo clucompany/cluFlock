@@ -1,4 +1,5 @@
 
+use std::io::Error;
 use crate::unlock::TryFlockUnlock;
 use crate::unlock::WaitFlockUnlock;
 use crate::element::FlockElement;
@@ -40,7 +41,7 @@ impl<T> TryFlockUnlock for T where T: FlockElement<FilePtr = RawFd> {
 	}
 	
 	#[inline]
-	unsafe fn unlock_fn<F: FnOnce() -> R, FE: FnOnce(std::io::Error) -> R, R>(&mut self, next: F, errf: FE) -> R {
+	unsafe fn unlock_fn<R>(&mut self, next: impl FnOnce() -> R, errf: impl FnOnce(Error) -> R) -> R {
 		force_run_flock(
 			self,
 			TRY_UNLOCK,
@@ -60,7 +61,7 @@ impl<T> WaitFlockUnlock for T where T: FlockElement<FilePtr = RawFd> {
 	}
 	
 	#[inline]
-	unsafe fn unlock_fn<F: FnOnce() -> R, FE: FnOnce(std::io::Error) -> R, R>(&mut self, next: F, errf: FE) -> R {
+	unsafe fn unlock_fn<R>(&mut self, next: impl FnOnce() -> R, errf: impl FnOnce(Error) -> R) -> R {
 		force_run_flock(
 			self,
 			WAIT_UNLOCK,
@@ -73,7 +74,7 @@ impl<T> WaitFlockUnlock for T where T: FlockElement<FilePtr = RawFd> {
 
 impl<T> SharedFlock for T where T: FlockElement<FilePtr = RawFd> {
 	#[inline]
-	fn try_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R {
+	fn try_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R {
 		next_safe_flock(
 			self,
 			TRY_SHARED_LOCK,
@@ -83,7 +84,7 @@ impl<T> SharedFlock for T where T: FlockElement<FilePtr = RawFd> {
 	}
 	
 	#[inline]
-	fn wait_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R {
+	fn wait_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R {
 		next_safe_flock(
 			self,
 			WAIT_SHARED_LOCK,
@@ -95,7 +96,7 @@ impl<T> SharedFlock for T where T: FlockElement<FilePtr = RawFd> {
 
 impl<T> ExclusiveFlock for T where T: FlockElement<FilePtr = RawFd> {
 	#[inline]
-	fn try_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R {
+	fn try_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R {
 		next_safe_flock(
 			self,
 			TRY_EXCLUSIVE_LOCK,
@@ -105,7 +106,7 @@ impl<T> ExclusiveFlock for T where T: FlockElement<FilePtr = RawFd> {
 	}
 	
 	#[inline]
-	fn wait_lock_fn<F: FnOnce(FlockLock<Self>) -> R, FE: FnOnce(FlockError<Self>) -> R, R>(self, next: F, errf: FE) -> R {
+	fn wait_lock_fn<R>(self, next: impl FnOnce(FlockLock<Self>) -> R, errf: impl FnOnce(FlockError<Self>) -> R) -> R {
 		next_safe_flock(
 			self, 
 			WAIT_EXCLUSIVE_LOCK,
@@ -125,7 +126,9 @@ fn force_run_flock_ignore_result<D: FlockElement<FilePtr = RawFd>>(data: D, flag
 #[inline(always)]
 fn force_run_flock<D: FlockElement<FilePtr = RawFd>, F: FnOnce(D) -> R, FE: FnOnce(FlockError<D>) -> R, R>(data: D, flag: LibcFlag, next: F, errf: FE) -> R {
 	let result = unsafe {
-		libc::flock(FlockElement::as_file_ptr(&data), flag)
+		let ptr = FlockElement::as_file_ptr(&data);
+		
+		libc::flock(ptr, flag)
 	};
 	
 	match result {
