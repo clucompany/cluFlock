@@ -11,7 +11,6 @@ use std::fs::OpenOptions;
 // Example
 // The temporary file for interprogram synchronization.
 
-
 #[derive(Debug)]
 #[allow(dead_code)]
 pub struct RuntimeLockFile<'a> {

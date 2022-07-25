@@ -1,8 +1,8 @@
 
 
-
+#[cfg(feature = "std")]
 #[cfg(unix)]
-pub mod unix {
+mod unix {
 	use std::ffi::OsString;
 	use std::borrow::Cow;
 	use core::ops::Deref;

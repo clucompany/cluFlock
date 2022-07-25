@@ -1,7 +1,8 @@
 
 
+#[cfg(feature = "std")]
 #[cfg(windows)]
-pub mod windows {
+mod windows {
 	use core::ops::Deref;
 	use std::fs::File;
 	use std::path::Path;

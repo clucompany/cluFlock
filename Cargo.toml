@@ -12,14 +12,28 @@ categories = ["development-tools::ffi"]
 
 description = "Installation and subsequent safe removal of `flock` locks for data streams."
 
+# docs.rs-specific configuration
+[package.metadata.docs.rs]
+# document all features
+all-features = true
+# defines the configuration attribute `docsrs`
+rustdoc-args = ["--cfg", "docsrs"]
+
 [features]
-default = ["win_fix_woudblock_in_errresult", "always_check_ranges"]
-win_fix_woudblock_in_errresult = []
-always_check_ranges = []
+default = ["win_fix_woudblock_in_errresult", "std"] 
+win_fix_woudblock_in_errresult = [] # !!!Works only in windows platform.
+std = []
 
 [dependencies]
-#exp version = "1.0.1"
-SafeManuallyDrop = { git = "https://github.com/clucompany/SafeManuallyDrop", default-features = false, features = ["always_check_in_case_debug_assertions", "support_panic_trig", "always_deftrig_panic"] }
+
+[dependencies.SafeManuallyDrop]
+version = "1.0.2"
+default-features = false
+features = [
+	"always_check_in_case_debug_assertions", 
+	"support_panic_trig", 
+	"always_deftrig_panic"
+]
 
 [target.'cfg(unix)'.dependencies]
 libc = "0.2.126"
