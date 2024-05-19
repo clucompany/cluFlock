@@ -1,5 +1,4 @@
-#![allow(non_snake_case)]
-//Copyright 2022 #UlinProject Денис Котляров
+//Copyright 2022-2024 #UlinProject Денис Котляров
 
 //Licensed under the Apache License, Version 2.0 (the "License");
 //you may not use this file except in compliance with the License.
@@ -114,14 +113,16 @@ fn main() -> Result<(), io::Error> {
 
 # License
 
-Copyright 2022 #UlinProject Denis Kotlyarov (Денис Котляров)
+Copyright 2022-2024 #UlinProject Denis Kotlyarov (Денис Котляров)
 
 Licensed under the Apache License, Version 2.0
 
 */
+#![allow(non_snake_case)]
 #![cfg_attr(not(feature = "std"), no_std)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![allow(clippy::tabs_in_doc_comments)]
+#![allow(clippy::duplicate_mod)]
 
 use crate::element::FlockElement;
 use crate::err::FlockError;
@@ -147,11 +148,6 @@ cfg_std! {
 	}
 }
 
-//#[cfg(windows)]
-/*#[cfg_attr(docsrs, doc(
-	cfg(windows)
-))]*/
-//#[cfg(windows)]
 pub mod range;
 mod range_lock;
 pub use crate::range_lock::*;

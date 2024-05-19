@@ -16,6 +16,7 @@ use winapi::shared::minwindef::DWORD;
 use winapi::um::minwinbase::LPOVERLAPPED;
 use winapi::um::minwinbase::OVERLAPPED;
 use winapi::um::winnt::MAXDWORD;
+use crate::range::pnum::__make_auto_pnum_type;
 
 //type RawHandle = winapi::um::winnt::HANDLE;
 type RawBool = winapi::shared::minwindef::BOOL;
@@ -70,7 +71,7 @@ impl FlockRangePNumBeh for DWORD {
 		self as _
 	}
 }
-crate::__make_auto_pnum_type!(DWORD);
+__make_auto_pnum_type!(DWORD);
 
 impl FlockRangePNumBeh for usize {
 	const MIN: usize = 0 as _;
@@ -81,7 +82,7 @@ impl FlockRangePNumBeh for usize {
 		self as _
 	}
 }
-crate::__make_auto_pnum_type!(usize);
+__make_auto_pnum_type!(usize);
 
 // TryFlockUnlock ! ....
 impl<T> WaitFlockUnlock for T

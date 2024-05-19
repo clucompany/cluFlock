@@ -35,8 +35,8 @@ features = [
 	"always_deftrig_panic"
 ]
 
-[target.'cfg(unix)'.dependencies]
+[target.'cfg(any(unix))'.dependencies]
 libc = "0.2.155"
 
-[target.'cfg(windows)'.dependencies]
+[target.'cfg(any(windows))'.dependencies]
 winapi = { version = "0.3.9", features = ["fileapi", "minwinbase", "winnt", "ntdef"] }
