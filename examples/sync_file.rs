@@ -1,4 +1,3 @@
-
 use cluFlock::ExclusiveFlock;
 use std::fs::File;
 use std::time::Duration;
@@ -16,20 +15,18 @@ fn main() {
 			println!("OK, File {:?} successfully locked.", file);
 
 			lock
-		},
-		
+		}
 		// File already locked.
 		Err(ref e) if e.is_already_lock() => {
 			println!("ALREADY LOCKED: File {:?}.", file);
 
 			println!("!Exclusive_Lock, {:?}", file);
-			
+
 			// Lock the current thread to such an extent until your file is unlocked.
 			// &file.wait_exclusive_lock().unwrap()
 			ExclusiveFlock::wait_lock(&file).unwrap()
-		},
-		
-		Err(e) => panic!("Panic, err lock file {:?}", e)
+		}
+		Err(e) => panic!("Panic, err lock file {:?}", e),
 	};
 
 	println!("Sleep, 5s");

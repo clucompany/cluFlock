@@ -1,10 +1,9 @@
-
 /*
 	!!!!!!!!!!!!!!!!!
 	!!! ATTENTION !!!
 	!!!!!!!!!!!!!!!!!
-	
-	If this situation arises and you are sure about the support (flock, LockFileEx, ...) 
+
+	If this situation arises and you are sure about the support (flock, LockFileEx, ...)
 	you need to clarify the operating system and check the build flags.
 */
 
